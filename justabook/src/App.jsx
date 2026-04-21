@@ -26,6 +26,54 @@ export const createBook = (title = 'Mijn boek') => ({
   createdAt: new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'numeric', year: '2-digit' }),
 })
 
+const createHandyBook = () => ({
+  id: crypto.randomUUID(),
+  title: 'Handy',
+  createdAt: new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'numeric', year: '2-digit' }),
+  pages: [
+    {
+      id: crypto.randomUUID(),
+      title: 'Claude Design',
+      type: 'hoofdstuk',
+      drawing: null,
+      createdAt: '21/4/26',
+      items: [{ id: crypto.randomUUID(), type: 'text', content: 'Claude Design (Anthropic Labs) is een tool om designs, prototypes, slides en one-pagers te maken via gesprekken met Claude.\n\n• Aangedreven door Claude Opus 4.7 (vision)\n• Beschrijf wat je wil → Claude bouwt de eerste versie\n• Verfijnen via: gesprek, inline comments, directe edits, of custom sliders\n• Export naar: Canva, PDF, of PPTX — of doorgeven aan Claude Code\n• Leest je codebase en design files om een design system op te bouwen\n• Beschikbaar in research preview op Pro, Max, Team en Enterprise plans\n\n⚠️ Claude Design is zwaar op usage. Zie het volgende hoofdstuk.' }],
+    },
+    {
+      id: crypto.randomUUID(),
+      title: 'Claude Usage Laag Houden — 7 Tips',
+      type: 'kop2',
+      drawing: null,
+      createdAt: '21/4/26',
+      items: [{ id: crypto.randomUUID(), type: 'text', content: 'Bron: Ashley Couto (LinkedIn)\n\n1/ Genereer tekst NIET in Claude Design\nGebruik Haiku of Sonnet, niet Opus 4.7. Eén infographic kost ~44% van je daglijmiet.\n\n2/ Stop met Sonnet & Opus gebruiken zonder reden\nHaiku is krachtiger dan je denkt. Laat Opus voor de zware taken.\n\n3/ MCP-servers zijn geen Pokémon — vang ze niet allemaal\nInactieve servers kosten duizenden tokens, ook als je ze niet gebruikt.\n\n4/ Plannen in Opus, uitvoeren in Sonnet\nSonnet is licht en krachtig. Bewaar Opus voor de echt betekenisvolle taken.\n\n5/ Schrijf specifieke prompts die direct naar bestanden wijzen\nExploratief gedrag (Claude laten rondsnuffelen) vreet usage.\n\n6/ Zet redeneer-modus standaard UIT\nDe meeste prompts zijn niet diep genoeg voor reasoning.\n\n7/ Edits in Claude Design: gebruik manual input & comments\nGebruik de linkerzijbalk zo min mogelijk — die crawlt door het hele document.' }],
+    },
+    {
+      id: crypto.randomUUID(),
+      title: 'Seedance AI — Prompt Formula voor Productvideo\'s',
+      type: 'hoofdstuk',
+      drawing: null,
+      createdAt: '21/4/26',
+      items: [{ id: crypto.randomUUID(), type: 'text', content: 'Seedance.ai maakt korte productvideo\'s van een stilstaand productfoto.\n\nStap 1: Maak of gebruik een productfoto\nGenereer via Nano Banana, of gebruik je eigen foto.\n\nStap 2: Typ je prompt in dit formaat:\n\n1. Subject — Wat zit er in de shot. Wees specifiek: product, vorm, materiaal, kleur, omgeving.\n\n2. Action — Wat er gebeurt. Beschrijf de beweging concreet, geen sfeer.\n\n3. Camera — Hoe de camera beweegt. Gebruik één camera-move per shot.\n\n4. Style — Hoe het eruit moet zien: belichting, kleurgrading, filmreferentie.\n\n5. Constraints — Wat consistent moet blijven:\n→ avoid jitter\n→ avoid flicker\n→ maintain product consistency\n→ keep the product centered\n\nExtra tips:\n→ Gebruik referentieafbeeldingen om de productidentiteit te vergrendelen\n→ Voeg tijdcodes toe per shot voor betere pacing\n→ Verander één variabele per iteratie' }],
+    },
+    {
+      id: crypto.randomUUID(),
+      title: 'Tip Links',
+      type: 'kop2',
+      drawing: null,
+      createdAt: '21/4/26',
+      items: [{ id: crypto.randomUUID(), type: 'text', content: 'Claude Usage Tips — Ashley Couto\nhttps://lnkd.in/en-PBJA2 — Hoe Ashley Claude Design tot nu toe gebruikt\nhttps://lnkd.in/e_JaZAh2 — Gratis Maven training: van gebruiker naar native operator\n\nSeedance AI Prompt Formula\nhttps://how-to-ai.guide — Volledige prompt library + meer guides voor AI video' }],
+    },
+  ],
+})
+
+const loadBooks = () => {
+  try {
+    const saved = localStorage.getItem('justabook_books')
+    if (saved) return JSON.parse(saved)
+  } catch {}
+  return [createBook(), createHandyBook()]
+}
+
 // ── LOGIN PAGE ────────────────────────────────────────────────────────────────
 function LoginPage() {
   const [mode, setMode]         = useState('login') // 'login' | 'signup' | 'forgot'
@@ -152,7 +200,7 @@ function LoginPage() {
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [session, setSession]         = useState(undefined)
-  const [books, setBooks]             = useState([createBook()])
+  const [books, setBooks]             = useState(loadBooks)
   const [activeBookId, setActiveBookId] = useState(null)
   const [activePageId, setActivePageId] = useState(null)
   const [sidebarOpen, setSidebarOpen]   = useState(true)
@@ -164,6 +212,10 @@ export default function App() {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('justabook_books', JSON.stringify(books))
+  }, [books])
 
   // Ensure activeBookId is always valid
   useEffect(() => {
