@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
 import { supabase } from './supabase'
+import {
+  loadBooks as loadBooksDB,
+  addBookDB, updateBookDB, deleteBookDB,
+  addPageDB, updatePageDB, deletePageDB, reorderPagesDB,
+} from './db.js'
 import './App.css'
 
 const newTextItem = (content = '') => ({
@@ -199,23 +204,43 @@ function LoginPage() {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
-  const [session, setSession]         = useState(undefined)
-  const [books, setBooks]             = useState(loadBooks)
+  const [session, setSession]           = useState(undefined)
+  const [books, setBooks]               = useState([])
   const [activeBookId, setActiveBookId] = useState(null)
   const [activePageId, setActivePageId] = useState(null)
   const [sidebarOpen, setSidebarOpen]   = useState(true)
+  const [loading, setLoading]           = useState(false)
+
+  // Debounce timers for page content updates
+  const updateTimers = useRef({})
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+      setSession(sess)
     })
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     return () => subscription.unsubscribe()
   }, [])
 
+  // Load books from Supabase when user logs in
   useEffect(() => {
-    localStorage.setItem('justabook_books', JSON.stringify(books))
-  }, [books])
+    if (!session) { setBooks([]); return }
+    setLoading(true)
+    loadBooksDB(session.user.id).then(loaded => {
+      if (loaded.length === 0) {
+        // New user — create a default book
+        const book = createBook('Mijn eerste boek')
+        setBooks([book])
+        addBookDB(session.user.id, book).then(() => {
+          const [firstPage] = book.pages
+          addPageDB(session.user.id, book.id, firstPage, 0)
+        })
+      } else {
+        setBooks(loaded)
+      }
+      setLoading(false)
+    })
+  }, [session?.user?.id])
 
   // Ensure activeBookId is always valid
   useEffect(() => {
@@ -234,10 +259,15 @@ export default function App() {
     setBooks(prev => [...prev, book])
     setActiveBookId(book.id)
     setActivePageId(null)
+    addBookDB(session.user.id, book).then(() => {
+      const [firstPage] = book.pages
+      addPageDB(session.user.id, book.id, firstPage, 0)
+    })
   }
 
   const updateBookTitle = (id, title) => {
     setBooks(prev => prev.map(b => b.id === id ? { ...b, title } : b))
+    updateBookDB({ id, title })
   }
 
   const selectBook = (id) => {
@@ -246,40 +276,62 @@ export default function App() {
   }
 
   // ── Page operations (scoped to active book) ──
-  const updateBookPages = (bookId, updater) => {
+  const updateBookPages = useCallback((bookId, updater) => {
     setBooks(prev => prev.map(b => b.id === bookId ? { ...b, pages: updater(b.pages) } : b))
-  }
+  }, [])
 
   const addPage = (afterId = null, type = 'hoofdstuk') => {
     const newPage = createPage(type === 'kop2' ? 'Kop 2' : 'Hoofdstuk', type)
+    let sortOrder = 0
     updateBookPages(activeBook.id, pages => {
-      if (!afterId) return [...pages, newPage]
+      if (!afterId) {
+        sortOrder = pages.length
+        return [...pages, newPage]
+      }
       const idx = pages.findIndex(p => p.id === afterId)
+      sortOrder = idx + 1
       const next = [...pages]
       next.splice(idx + 1, 0, newPage)
       return next
     })
     setActivePageId(newPage.id)
+    addPageDB(session.user.id, activeBook.id, newPage, sortOrder)
   }
 
   const updatePage = (id, field, value) => {
     updateBookPages(activeBook.id, pages =>
       pages.map(p => p.id === id ? { ...p, [field]: value } : p)
     )
+    // Debounce content updates (text typing), immediately sync structural changes
+    if (field === 'items') {
+      clearTimeout(updateTimers.current[id])
+      updateTimers.current[id] = setTimeout(() => {
+        updatePageDB({ id, [field]: value })
+      }, 800)
+    } else {
+      updatePageDB({ id, [field]: value })
+    }
   }
 
   const deletePage = (id) => {
     updateBookPages(activeBook.id, pages =>
       pages.length === 1 ? pages : pages.filter(p => p.id !== id)
     )
+    deletePageDB(id)
   }
 
   const reorderPages = (newPages) => {
     updateBookPages(activeBook.id, () => newPages)
+    reorderPagesDB(newPages)
   }
 
   if (session === undefined) return null
   if (!session) return <LoginPage />
+  if (loading) return (
+    <div style={{ minHeight:'100vh', background:'#f0ede8', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Georgia, serif', color:'#999', fontSize:14 }}>
+      Laden...
+    </div>
+  )
 
   return (
     <div className="app">
