@@ -10,7 +10,7 @@ export default function Sidebar({
   const [showBookMenu, setShowBookMenu] = useState(false)
   const [renamingId, setRenamingId]     = useState(null)
   const [renameValue, setRenameValue]   = useState('')
-  const [deletingId, setDeletingId]     = useState(null)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, title }
   const [addingBook, setAddingBook]     = useState(false)
   const [newBookName, setNewBookName]   = useState('')
   const bookMenuRef                     = useRef(null)
@@ -22,7 +22,6 @@ export default function Sidebar({
       if (bookMenuRef.current && !bookMenuRef.current.contains(e.target)) {
         setShowBookMenu(false)
         setRenamingId(null)
-        setDeletingId(null)
         setAddingBook(false)
         setNewBookName('')
       }
@@ -215,7 +214,7 @@ export default function Sidebar({
                               {book.title}
                             </button>
                           )}
-                          {renamingId !== book.id && deletingId !== book.id && (
+                          {renamingId !== book.id && (
                             <>
                               <button
                                 onClick={e => startRename(book, e)}
@@ -226,7 +225,7 @@ export default function Sidebar({
                               </button>
                               {books.length > 1 && (
                                 <button
-                                  onClick={e => { e.stopPropagation(); setDeletingId(book.id) }}
+                                  onClick={e => { e.stopPropagation(); setDeleteConfirm({ id: book.id, title: book.title }); setShowBookMenu(false) }}
                                   title="Verwijderen"
                                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '12px', padding: '4px 3px', lineHeight: 1, flexShrink: 0 }}
                                 >
@@ -234,23 +233,6 @@ export default function Sidebar({
                                 </button>
                               )}
                             </>
-                          )}
-                          {deletingId === book.id && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                              <span style={{ fontSize: '11px', color: '#DC2626', whiteSpace: 'nowrap' }}>Zeker?</span>
-                              <button
-                                onClick={e => { e.stopPropagation(); onDeleteBook(book.id); setDeletingId(null); setShowBookMenu(false) }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', fontSize: '12px', padding: '2px 3px', lineHeight: 1 }}
-                              >
-                                ✓
-                              </button>
-                              <button
-                                onClick={e => { e.stopPropagation(); setDeletingId(null) }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '12px', padding: '2px 3px', lineHeight: 1 }}
-                              >
-                                ✕
-                              </button>
-                            </div>
                           )}
                         </div>
                       ))}
@@ -483,6 +465,43 @@ export default function Sidebar({
         </div>
       )}
     </aside>
+
+    {/* Delete book confirmation modal */}
+    {deleteConfirm && (
+      <div
+        onClick={() => setDeleteConfirm(null)}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ background: '#f0ede8', borderRadius: 14, width: 360, padding: '28px 28px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.25)', fontFamily: 'Georgia, serif' }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 10 }}>
+            Boek verwijderen
+          </div>
+          <div style={{ fontSize: 13, color: '#555', marginBottom: 6, lineHeight: 1.5 }}>
+            Weet je zeker dat je <strong>"{deleteConfirm.title}"</strong> wilt verwijderen?
+          </div>
+          <div style={{ fontSize: 12, color: '#DC2626', marginBottom: 24, lineHeight: 1.5 }}>
+            Dit verwijdert alle pagina's en inhoud van dit boek permanent. Dit kan niet ongedaan worden gemaakt.
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => setDeleteConfirm(null)}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #d5d0c8', background: 'none', color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+            >
+              Annuleren
+            </button>
+            <button
+              onClick={() => { onDeleteBook(deleteConfirm.id); setDeleteConfirm(null) }}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+            >
+              Verwijderen
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* Settings modal */}
     {showSettings && (
