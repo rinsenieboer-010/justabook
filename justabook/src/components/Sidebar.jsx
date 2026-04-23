@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 
 export default function Sidebar({
   books, activeBook, pages, activeId,
-  onSelect, onSelectBook, onAddBook, onRenameBook,
+  onSelect, onSelectBook, onAddBook, onRenameBook, onDeleteBook,
   isOpen, onToggle, userEmail, onSignOut,
 }) {
   const [query, setQuery]               = useState('')
@@ -10,7 +10,11 @@ export default function Sidebar({
   const [showBookMenu, setShowBookMenu] = useState(false)
   const [renamingId, setRenamingId]     = useState(null)
   const [renameValue, setRenameValue]   = useState('')
+  const [deletingId, setDeletingId]     = useState(null)
+  const [addingBook, setAddingBook]     = useState(false)
+  const [newBookName, setNewBookName]   = useState('')
   const bookMenuRef                     = useRef(null)
+  const newBookInputRef                 = useRef(null)
 
   // Close book menu when clicking outside
   useEffect(() => {
@@ -18,6 +22,9 @@ export default function Sidebar({
       if (bookMenuRef.current && !bookMenuRef.current.contains(e.target)) {
         setShowBookMenu(false)
         setRenamingId(null)
+        setDeletingId(null)
+        setAddingBook(false)
+        setNewBookName('')
       }
     }
     if (showBookMenu) document.addEventListener('mousedown', handler)
@@ -46,6 +53,22 @@ export default function Sidebar({
       onRenameBook(renamingId, renameValue.trim())
     }
     setRenamingId(null)
+  }
+
+  const startAddBook = () => {
+    setNewBookName('')
+    setAddingBook(true)
+    setTimeout(() => newBookInputRef.current?.focus(), 50)
+  }
+
+  const commitAddBook = () => {
+    const name = newBookName.trim()
+    if (name) {
+      onAddBook(name)
+      setShowBookMenu(false)
+    }
+    setAddingBook(false)
+    setNewBookName('')
   }
 
   return (
@@ -192,48 +215,79 @@ export default function Sidebar({
                               {book.title}
                             </button>
                           )}
-                          {renamingId !== book.id && (
-                            <button
-                              onClick={e => startRename(book, e)}
-                              title="Hernoemen"
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                color: '#aaa',
-                                fontSize: '11px',
-                                padding: '4px 4px',
-                                lineHeight: 1,
-                                flexShrink: 0,
-                              }}
-                            >
-                              ✎
-                            </button>
+                          {renamingId !== book.id && deletingId !== book.id && (
+                            <>
+                              <button
+                                onClick={e => startRename(book, e)}
+                                title="Hernoemen"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '11px', padding: '4px 3px', lineHeight: 1, flexShrink: 0 }}
+                              >
+                                ✎
+                              </button>
+                              {books.length > 1 && (
+                                <button
+                                  onClick={e => { e.stopPropagation(); setDeletingId(book.id) }}
+                                  title="Verwijderen"
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '12px', padding: '4px 3px', lineHeight: 1, flexShrink: 0 }}
+                                >
+                                  🗑
+                                </button>
+                              )}
+                            </>
+                          )}
+                          {deletingId === book.id && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                              <span style={{ fontSize: '11px', color: '#DC2626', whiteSpace: 'nowrap' }}>Zeker?</span>
+                              <button
+                                onClick={e => { e.stopPropagation(); onDeleteBook(book.id); setDeletingId(null); setShowBookMenu(false) }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', fontSize: '12px', padding: '2px 3px', lineHeight: 1 }}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={e => { e.stopPropagation(); setDeletingId(null) }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '12px', padding: '2px 3px', lineHeight: 1 }}
+                              >
+                                ✕
+                              </button>
+                            </div>
                           )}
                         </div>
                       ))}
                     </div>
 
                     {/* Divider + Add book */}
-                    <div style={{ borderTop: '1px solid #d5d0c8' }}>
-                      <button
-                        onClick={() => { onAddBook(); setShowBookMenu(false) }}
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '9px 14px',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontFamily: 'Georgia, serif',
-                          fontSize: '13px',
-                          color: '#555',
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#e0dbd4'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                      >
-                        + Nieuw boek
-                      </button>
+                    <div style={{ borderTop: '1px solid #d5d0c8', padding: '8px 10px' }}>
+                      {addingBook ? (
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <input
+                            ref={newBookInputRef}
+                            value={newBookName}
+                            onChange={e => setNewBookName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') commitAddBook()
+                              if (e.key === 'Escape') { setAddingBook(false); setNewBookName('') }
+                            }}
+                            placeholder="Naam van het boek"
+                            style={{ flex: 1, padding: '5px 8px', border: '1px solid #aaa', borderRadius: 5, background: '#fff', fontFamily: 'Georgia, serif', fontSize: '13px', outline: 'none', minWidth: 0 }}
+                          />
+                          <button
+                            onClick={commitAddBook}
+                            style={{ background: '#2563EB', border: 'none', borderRadius: 5, color: '#fff', fontSize: '12px', padding: '4px 8px', cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            ✓
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={startAddBook}
+                          style={{ width: '100%', textAlign: 'left', padding: '4px 4px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: '13px', color: '#555', borderRadius: 4 }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#e0dbd4'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                        >
+                          + Nieuw boek
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

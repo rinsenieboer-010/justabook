@@ -7,6 +7,7 @@ import {
   addBookDB, updateBookDB, deleteBookDB,
   addPageDB, updatePageDB, deletePageDB, reorderPagesDB,
 } from './db.js'
+
 import './App.css'
 
 const newTextItem = (content = '') => ({
@@ -270,6 +271,17 @@ export default function App() {
     updateBookDB({ id, title })
   }
 
+  const deleteBook = (id) => {
+    if (books.length <= 1) return
+    const remaining = books.filter(b => b.id !== id)
+    setBooks(remaining)
+    if (activeBookId === id) {
+      setActiveBookId(remaining[0].id)
+      setActivePageId(null)
+    }
+    deleteBookDB(id)
+  }
+
   const selectBook = (id) => {
     setActiveBookId(id)
     setActivePageId(null)
@@ -344,6 +356,7 @@ export default function App() {
         onSelectBook={selectBook}
         onAddBook={addBook}
         onRenameBook={updateBookTitle}
+        onDeleteBook={deleteBook}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(o => !o)}
         userEmail={session.user.email}
