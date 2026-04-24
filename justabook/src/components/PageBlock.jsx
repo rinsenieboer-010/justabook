@@ -13,10 +13,12 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   const photoInputRef = useRef(null)
   const drawingRef = useRef(false)
   const lastPos = useRef(null)
+  const strokeHistory = useRef([])
   const [activeItemId, setActiveItemId] = useState(null)
   const [drawMode, setDrawMode] = useState(false)
   const [penColor, setPenColor] = useState('#1a1a1a')
   const [penSize, setPenSize] = useState(2)
+  const [isEraser, setIsEraser] = useState(false)
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: page.id })
   const dndStyle = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
@@ -114,8 +116,11 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   const startDraw = useCallback((e) => {
     if (!drawMode) return
     e.preventDefault()
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    strokeHistory.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height))
     drawingRef.current = true
-    lastPos.current = getCanvasPos(e, canvasRef.current)
+    lastPos.current = getCanvasPos(e, canvas)
   }, [drawMode])
 
   const draw = useCallback((e) => {
@@ -127,28 +132,46 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
     ctx.beginPath()
     ctx.moveTo(lastPos.current.x, lastPos.current.y)
     ctx.lineTo(pos.x, pos.y)
-    ctx.strokeStyle = penColor
-    ctx.lineWidth = penSize
+    if (isEraser) {
+      ctx.globalCompositeOperation = 'destination-out'
+      ctx.strokeStyle = 'rgba(0,0,0,1)'
+      ctx.lineWidth = penSize * 4
+    } else {
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.strokeStyle = penColor
+      ctx.lineWidth = penSize
+    }
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
     ctx.stroke()
+    ctx.globalCompositeOperation = 'source-over'
     lastPos.current = pos
-  }, [drawMode, penColor, penSize])
+  }, [drawMode, penColor, penSize, isEraser])
 
   const stopDraw = useCallback(() => {
     drawingRef.current = false
     lastPos.current = null
   }, [])
 
+  const undoStroke = () => {
+    if (strokeHistory.current.length === 0) return
+    const prev = strokeHistory.current.pop()
+    const canvas = canvasRef.current
+    canvas.getContext('2d').putImageData(prev, 0, 0)
+  }
+
   const exitDrawMode = () => {
     const canvas = canvasRef.current
     if (canvas?.width > 0) onUpdate(page.id, 'drawing', canvas.toDataURL())
     setDrawMode(false)
+    strokeHistory.current = []
+    setIsEraser(false)
   }
 
   const clearCanvas = () => {
     const canvas = canvasRef.current
     if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
+    strokeHistory.current = []
     onUpdate(page.id, 'drawing', null)
   }
 
@@ -260,7 +283,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           style={{
             position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
             pointerEvents: drawMode ? 'all' : 'none',
-            cursor: drawMode ? 'crosshair' : 'default',
+            cursor: drawMode ? (isEraser ? 'cell' : 'crosshair') : 'default',
             zIndex: drawMode ? 10 : 0,
             borderRadius: '8px',
           }}
@@ -278,18 +301,18 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
             onMouseDown={e => e.stopPropagation()}
           >
             {COLORS.map(c => (
-              <button key={c} onClick={() => setPenColor(c)} style={{
+              <button key={c} onClick={() => { setPenColor(c); setIsEraser(false) }} style={{
                 width: '16px', height: '16px', borderRadius: '50%', background: c, padding: 0,
-                border: penColor === c ? '2px solid #fff' : '2px solid transparent',
-                outline: penColor === c ? `2px solid ${c}` : 'none',
-                cursor: 'pointer', flexShrink: 0,
+                border: !isEraser && penColor === c ? '2px solid #fff' : '2px solid transparent',
+                outline: !isEraser && penColor === c ? `2px solid ${c}` : 'none',
+                cursor: 'pointer', flexShrink: 0, opacity: isEraser ? 0.4 : 1,
               }} />
             ))}
             <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
             {PEN_SIZES.map((s, i) => (
               <button key={s} onClick={() => setPenSize(s)} style={{
                 width: '20px', height: '20px', borderRadius: '50%', padding: 0,
-                background: penSize === s ? '#1a1a1a' : 'transparent',
+                background: penSize === s ? (isEraser ? '#aaa' : '#1a1a1a') : 'transparent',
                 border: '1px solid #ccc', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
@@ -297,7 +320,16 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
               </button>
             ))}
             <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
-            <button onClick={clearCanvas} style={toolBtnStyle}>🗑</button>
+            <button onClick={() => setIsEraser(v => !v)} title="Gummetje" style={{
+              ...toolBtnStyle,
+              background: isEraser ? '#f0ede8' : 'none',
+              borderRadius: '4px',
+              padding: '2px 4px',
+              border: isEraser ? '1px solid #ccc' : '1px solid transparent',
+              fontSize: '14px',
+            }}>◻</button>
+            <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
+            <button onClick={undoStroke} title="Undo" style={toolBtnStyle}>↩</button>
             <button onClick={exitDrawMode} style={{ ...toolBtnStyle, fontWeight: 'bold' }}>✓</button>
           </div>
         )}
