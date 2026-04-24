@@ -149,24 +149,37 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   }, [drawMode, penColor, penSize, isEraser])
 
   const stopDraw = useCallback(() => {
+    if (drawingRef.current) {
+      const canvas = canvasRef.current
+      if (canvas?.width > 0) onUpdate(page.id, 'drawing', canvas.toDataURL())
+    }
     drawingRef.current = false
     lastPos.current = null
-  }, [])
+  }, [onUpdate, page.id])
 
   const undoStroke = () => {
     if (strokeHistory.current.length === 0) return
     const prev = strokeHistory.current.pop()
     const canvas = canvasRef.current
     canvas.getContext('2d').putImageData(prev, 0, 0)
+    if (canvas?.width > 0) onUpdate(page.id, 'drawing', canvas.toDataURL())
   }
 
   const exitDrawMode = () => {
-    const canvas = canvasRef.current
-    if (canvas?.width > 0) onUpdate(page.id, 'drawing', canvas.toDataURL())
     setDrawMode(false)
     strokeHistory.current = []
     setIsEraser(false)
   }
+
+  // Klik buiten de pagina → stop automatisch met tekenen
+  useEffect(() => {
+    if (!drawMode) return
+    const handler = (e) => {
+      if (!containerRef.current?.contains(e.target)) exitDrawMode()
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [drawMode])
 
   const clearCanvas = () => {
     const canvas = canvasRef.current
@@ -275,6 +288,15 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           })}
         </div>
 
+        {/* Tekening altijd zichtbaar als img buiten draw mode */}
+        {page.drawing && !drawMode && (
+          <img
+            src={page.drawing}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', borderRadius: '8px' }}
+            alt=""
+          />
+        )}
+
         {/* Drawing canvas overlay */}
         <canvas
           ref={canvasRef}
@@ -329,8 +351,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
               fontSize: '14px',
             }}>◻</button>
             <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
-            <button onClick={undoStroke} title="Undo" style={toolBtnStyle}>↩</button>
-            <button onClick={exitDrawMode} style={{ ...toolBtnStyle, fontWeight: 'bold' }}>✓</button>
+            <button onClick={undoStroke} title="Ongedaan maken" style={toolBtnStyle}>↩</button>
           </div>
         )}
 
