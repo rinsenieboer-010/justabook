@@ -23,6 +23,24 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: page.id })
   const dndStyle = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
 
+  const startResize = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const startY = e.clientY
+    const startH = containerRef.current.offsetHeight
+
+    const onMove = (ev) => {
+      const newH = Math.max(80, startH + (ev.clientY - startY))
+      onUpdate(page.id, 'minHeight', newH)
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
   const items = page.items || [newTextItem()]
 
   // ─── Items helpers ─────────────────────────────────────
@@ -201,6 +219,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           position: 'relative',
           boxShadow: isActive ? '0 2px 12px rgba(0,0,0,0.08)' : '0 1px 4px rgba(0,0,0,0.04)',
           transition: 'box-shadow 0.2s, border-color 0.2s',
+          minHeight: page.minHeight ? `${page.minHeight}px` : undefined,
         }}
       >
         {/* Drag handle */}
@@ -356,7 +375,14 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         )}
 
         {/* Footer */}
-        <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', width: '32px', height: '4px', borderRadius: '2px', background: '#e8e4de', zIndex: 1 }} />
+        <div
+          onMouseDown={!drawMode ? startResize : undefined}
+          style={{
+            position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)',
+            width: '32px', height: '4px', borderRadius: '2px', background: '#e8e4de',
+            zIndex: 1, cursor: drawMode ? 'default' : 'ns-resize',
+          }}
+        />
         <div style={{ position: 'absolute', bottom: '8px', right: '14px', fontSize: '11px', color: '#ccc', fontFamily: 'Georgia, serif', userSelect: 'none', zIndex: 1 }}>
           {page.createdAt}
         </div>
