@@ -1,27 +1,15 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useRef, useEffect, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import DrawingBlock from './DrawingBlock'
 
-const COLORS = ['#1a1a1a', '#555', '#e03030', '#2060d0', '#e8a020', '#20a050']
-const PEN_SIZES = [2, 5, 10]
-
 const newTextItem = (content = '') => ({ id: crypto.randomUUID(), type: 'text', content })
+const newDrawingItem = () => ({ id: crypto.randomUUID(), type: 'drawing', data: null, height: 240 })
 
 export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, onDelete, selectedDrawingId, onSelectDrawing }) {
-  const canvasRef = useRef(null)
   const containerRef = useRef(null)
   const photoInputRef = useRef(null)
-  const drawingRef = useRef(false)
-  const lastPos = useRef(null)
-  const strokeHistory = useRef([])
   const [activeItemId, setActiveItemId] = useState(null)
-  const [drawMode, setDrawMode] = useState(false)
-  const [editingDrawingId, setEditingDrawingId] = useState(null)
-  const [penColor, setPenColor] = useState('#1a1a1a')
-  const [penSize, setPenSize] = useState(2)
-  const [isEraser, setIsEraser] = useState(false)
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: page.id })
   const dndStyle = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
@@ -39,11 +27,22 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
 
   const items = page.items || [newTextItem()]
   const setItems = (newItems) => onUpdate(page.id, 'items', newItems)
+
   const updateItem = (itemId, patch) =>
     setItems(items.map(it => it.id === itemId ? { ...it, ...patch } : it))
+
   const removeItem = (itemId) => {
     const next = items.filter(it => it.id !== itemId)
     setItems(next.length === 0 ? [newTextItem()] : next)
+  }
+
+  const addDrawingItem = () => {
+    const insertAfterIdx = activeItemId
+      ? items.findIndex(it => it.id === activeItemId)
+      : items.length - 1
+    const next = [...items]
+    next.splice(insertAfterIdx + 1, 0, newDrawingItem())
+    setItems(next)
   }
 
   // ─── Photo ─────────────────────────────────────────────
@@ -73,7 +72,6 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   }
 
   const startImageDrag = (e, item) => {
-    if (drawMode) return
     e.preventDefault(); e.stopPropagation()
     const startX = e.clientX
     const startOffset = item.offsetX || 0
@@ -83,138 +81,9 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
     window.addEventListener('mouseup', onUp)
   }
 
-  // ─── Canvas init (runs after portal canvas mounts) ─────
-  useEffect(() => {
-    if (!drawMode || !canvasRef.current) return
-    const canvas = canvasRef.current
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
-
-    if (editingDrawingId) {
-      const editItem = items.find(it => it.id === editingDrawingId)
-      if (editItem?.data) {
-        const img = new Image()
-        img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
-        img.src = editItem.data
-      }
-    }
-  }, [drawMode])
-
-  const getCanvasPos = (e, canvas) => {
-    const rect = canvas.getBoundingClientRect()
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY
-    return {
-      x: (clientX - rect.left) * (canvas.width / rect.width),
-      y: (clientY - rect.top) * (canvas.height / rect.height),
-    }
-  }
-
-  const startDraw = useCallback((e) => {
-    e.preventDefault()
-    const canvas = canvasRef.current
-    if (!canvas) return
-    strokeHistory.current.push(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height))
-    drawingRef.current = true
-    lastPos.current = getCanvasPos(e, canvas)
-  }, [])
-
-  const draw = useCallback((e) => {
-    if (!drawingRef.current) return
-    e.preventDefault()
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    const pos = getCanvasPos(e, canvas)
-    ctx.beginPath()
-    ctx.moveTo(lastPos.current.x, lastPos.current.y)
-    ctx.lineTo(pos.x, pos.y)
-    if (isEraser) {
-      ctx.globalCompositeOperation = 'destination-out'
-      ctx.strokeStyle = 'rgba(0,0,0,1)'
-      ctx.lineWidth = penSize * 4
-    } else {
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.strokeStyle = penColor
-      ctx.lineWidth = penSize
-    }
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    ctx.stroke()
-    ctx.globalCompositeOperation = 'source-over'
-    lastPos.current = pos
-  }, [penColor, penSize, isEraser])
-
-  const stopDraw = useCallback(() => {
-    drawingRef.current = false
-    lastPos.current = null
-  }, [])
-
-  const undoStroke = () => {
-    if (strokeHistory.current.length === 0) return
-    const canvas = canvasRef.current
-    canvas.getContext('2d').putImageData(strokeHistory.current.pop(), 0, 0)
-  }
-
-  const exitDrawMode = useCallback(() => {
-    setDrawMode(false)
-    setEditingDrawingId(null)
-    strokeHistory.current = []
-    setIsEraser(false)
-  }, [])
-
-  // ─── Bounding box + finish ─────────────────────────────
-  const getBoundingBox = (canvas) => {
-    const { data, width, height } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height)
-    let minX = width, minY = height, maxX = 0, maxY = 0
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        if (data[(y * width + x) * 4 + 3] > 10) {
-          if (x < minX) minX = x
-          if (x > maxX) maxX = x
-          if (y < minY) minY = y
-          if (y > maxY) maxY = y
-        }
-      }
-    }
-    return minX > maxX || minY > maxY ? null : { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
-  }
-
-  const finishDrawing = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) { exitDrawMode(); return }
-    const bbox = getBoundingBox(canvas)
-    if (!bbox) { exitDrawMode(); return }
-
-    const PAD = 16
-    const sx = Math.max(0, bbox.x - PAD)
-    const sy = Math.max(0, bbox.y - PAD)
-    const sw = Math.min(canvas.width - sx, bbox.w + PAD * 2)
-    const sh = Math.min(canvas.height - sy, bbox.h + PAD * 2)
-
-    const crop = document.createElement('canvas')
-    crop.width = sw
-    crop.height = sh
-    crop.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh)
-    const dataUrl = crop.toDataURL('image/png')
-
-    if (editingDrawingId) {
-      updateItem(editingDrawingId, { data: dataUrl })
-    } else {
-      const insertAfterIdx = activeItemId
-        ? items.findIndex(it => it.id === activeItemId)
-        : items.length - 1
-      const next = [...items]
-      next.splice(insertAfterIdx + 1, 0, { id: crypto.randomUUID(), type: 'drawing', data: dataUrl })
-      setItems(next)
-    }
-    exitDrawMode()
-  }, [editingDrawingId, activeItemId, items, exitDrawMode])
-
   // ─── Render ────────────────────────────────────────────
   return (
-    <div ref={setNodeRef} style={dndStyle} id={`page-${page.id}`} onClick={() => !drawMode && onSelect(page.id)}>
+    <div ref={setNodeRef} style={dndStyle} id={`page-${page.id}`} onClick={() => onSelect(page.id)}>
       <div
         ref={containerRef}
         style={{
@@ -333,7 +202,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
                 <DrawingBlock
                   key={item.id}
                   item={item}
-                  onEdit={(id) => { setEditingDrawingId(id); setDrawMode(true) }}
+                  onUpdate={(id, patch) => updateItem(id, patch)}
                   onRemove={removeItem}
                   isSelectedForAI={selectedDrawingId === item.id}
                   onSelectForAI={(it) => onSelectDrawing && onSelectDrawing(page.id, it)}
@@ -345,7 +214,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           })}
         </div>
 
-        {/* Legacy whole-page drawing (read-only, backwards compat) */}
+        {/* Legacy whole-page drawing */}
         {page.drawing && (
           <img
             src={page.drawing}
@@ -354,7 +223,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           />
         )}
 
-        {/* Footer */}
+        {/* Bottom resize handle */}
         <div
           onMouseDown={startResize}
           style={{
@@ -379,81 +248,9 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           <button onClick={() => onAdd(page.id, 'hoofdstuk')} style={addBtnStyle}>+ Hoofdstuk</button>
           <button onClick={() => onAdd(page.id, 'kop2')} style={addBtnStyle}>+ Kop 2</button>
           <button onClick={() => photoInputRef.current.click()} style={addBtnStyle}>+ Foto</button>
-          <button onClick={() => { setEditingDrawingId(null); setDrawMode(true) }} style={addBtnStyle}>✏ Tekenen</button>
+          <button onClick={addDrawingItem} style={addBtnStyle}>✏ Tekenvak</button>
           <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
         </div>
-      )}
-
-      {/* Drawing overlay — rendered via portal to escape DnD transform stacking context */}
-      {drawMode && createPortal(
-        <>
-          <canvas
-            ref={canvasRef}
-            onMouseDown={startDraw}
-            onMouseMove={draw}
-            onMouseUp={stopDraw}
-            onMouseLeave={stopDraw}
-            onTouchStart={startDraw}
-            onTouchMove={draw}
-            onTouchEnd={stopDraw}
-            style={{
-              position: 'fixed', top: 0, left: 0,
-              width: '100vw', height: '100vh',
-              cursor: isEraser ? 'cell' : 'crosshair',
-              zIndex: 999,
-              background: 'rgba(250,250,247,0.92)',
-              touchAction: 'none',
-            }}
-          />
-          <div
-            style={{
-              position: 'fixed', top: '16px', left: '50%', transform: 'translateX(-50%)',
-              zIndex: 1000, background: 'rgba(255,255,255,0.97)', borderRadius: '20px',
-              padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '8px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.18)', border: '1px solid #e8e4de', whiteSpace: 'nowrap',
-            }}
-            onMouseDown={e => e.stopPropagation()}
-          >
-            {COLORS.map(c => (
-              <button key={c} onClick={() => { setPenColor(c); setIsEraser(false) }} style={{
-                width: '16px', height: '16px', borderRadius: '50%', background: c, padding: 0,
-                border: !isEraser && penColor === c ? '2px solid #fff' : '2px solid transparent',
-                outline: !isEraser && penColor === c ? `2px solid ${c}` : 'none',
-                cursor: 'pointer', flexShrink: 0, opacity: isEraser ? 0.4 : 1,
-              }} />
-            ))}
-            <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
-            {PEN_SIZES.map((s, i) => (
-              <button key={s} onClick={() => setPenSize(s)} style={{
-                width: '20px', height: '20px', borderRadius: '50%', padding: 0,
-                background: penSize === s ? (isEraser ? '#aaa' : '#1a1a1a') : 'transparent',
-                border: '1px solid #ccc', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <div style={{ width: `${4 + i * 3}px`, height: `${4 + i * 3}px`, borderRadius: '50%', background: penSize === s ? '#fff' : '#1a1a1a' }} />
-              </button>
-            ))}
-            <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
-            <button onClick={() => setIsEraser(v => !v)} style={{
-              background: isEraser ? '#f0ede8' : 'none',
-              borderRadius: '4px', padding: '2px 6px',
-              border: isEraser ? '1px solid #ccc' : '1px solid transparent',
-              fontSize: '14px', cursor: 'pointer', color: '#888',
-            }}>◻</button>
-            <button onClick={undoStroke} style={toolBtnStyle}>↩</button>
-            <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
-            <button
-              onClick={finishDrawing}
-              style={{
-                padding: '5px 14px', fontSize: '12px', fontFamily: 'Georgia, serif',
-                background: '#1a1a1a', color: '#fff', border: 'none',
-                borderRadius: '10px', cursor: 'pointer', fontWeight: 600,
-              }}
-            >Klaar</button>
-            <button onClick={exitDrawMode} style={{ ...toolBtnStyle, fontSize: '12px', color: '#aaa' }}>Annuleer</button>
-          </div>
-        </>,
-        document.body
       )}
     </div>
   )
@@ -491,8 +288,4 @@ function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
 const addBtnStyle = {
   background: 'none', border: '1px solid #d5d0c8', borderRadius: '4px',
   padding: '4px 12px', fontSize: '12px', cursor: 'pointer', color: '#888', fontFamily: 'Georgia, serif',
-}
-
-const toolBtnStyle = {
-  background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: '0 2px', fontSize: '13px', lineHeight: 1,
 }
