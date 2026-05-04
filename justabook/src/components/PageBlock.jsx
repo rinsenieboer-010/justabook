@@ -7,7 +7,7 @@ const COLORS = ['#1a1a1a', '#555', '#e03030', '#2060d0', '#e8a020', '#20a050']
 const PEN_SIZES = [2, 5, 10]
 
 const newTextItem    = (content = '') => ({ id: crypto.randomUUID(), type: 'text', content })
-const newDrawingItem = ()             => ({ id: crypto.randomUUID(), type: 'drawing', data: null, height: 200 })
+const newDrawingItem = ()             => ({ id: crypto.randomUUID(), type: 'drawing', data: null })
 
 export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, onDelete, selectedDrawingId, onSelectDrawing }) {
   const canvasRef = useRef(null)
@@ -18,6 +18,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   const strokeHistory = useRef([])
   const [activeItemId, setActiveItemId] = useState(null)
   const [drawMode, setDrawMode] = useState(false)
+  const [editingDrawingId, setEditingDrawingId] = useState(null)
   const [penColor, setPenColor] = useState('#1a1a1a')
   const [penSize, setPenSize] = useState(2)
   const [isEraser, setIsEraser] = useState(false)
@@ -51,18 +52,8 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   const updateItem = (itemId, patch) =>
     setItems(items.map(it => it.id === itemId ? { ...it, ...patch } : it))
 
-  const addDrawingItem = () => {
-    const insertAfterIdx = activeItemId
-      ? items.findIndex(it => it.id === activeItemId)
-      : items.length - 1
-    const next = [...items]
-    next.splice(insertAfterIdx + 1, 0, newDrawingItem())
-    setItems(next)
-  }
-
   const removeItem = (itemId) => {
     const next = items.filter(it => it.id !== itemId)
-    // Always keep at least one text item
     setItems(next.length === 0 ? [newTextItem()] : next)
   }
 
@@ -79,14 +70,12 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         const h = (img.naturalHeight / img.naturalWidth) * w
         const photoItem = { id: crypto.randomUUID(), type: 'image', src: ev.target.result, offsetX: 0, width: w, height: h }
 
-        // Insert after active text item, or at end
         const insertAfterIdx = activeItemId
           ? items.findIndex(it => it.id === activeItemId)
           : items.length - 1
 
         const next = [...items]
         next.splice(insertAfterIdx + 1, 0, photoItem)
-        // Ensure there's a text item after the photo for continued typing
         if (!next[insertAfterIdx + 2] || next[insertAfterIdx + 2].type !== 'text') {
           next.splice(insertAfterIdx + 2, 0, newTextItem())
         }
@@ -125,10 +114,17 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
     const container = containerRef.current
     canvas.width = container.offsetWidth
     canvas.height = container.offsetHeight
-    if (page.drawing) {
-      const img = new Image()
-      img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0)
-      img.src = page.drawing
+    // Clear first
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
+
+    // Load existing drawing if editing
+    if (editingDrawingId) {
+      const editItem = items.find(it => it.id === editingDrawingId)
+      if (editItem?.data) {
+        const img = new Image()
+        img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        img.src = editItem.data
+      }
     }
   }, [drawMode])
 
@@ -178,26 +174,75 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   }, [drawMode, penColor, penSize, isEraser])
 
   const stopDraw = useCallback(() => {
-    if (drawingRef.current) {
-      const canvas = canvasRef.current
-      if (canvas?.width > 0) onUpdate(page.id, 'drawing', canvas.toDataURL())
-    }
     drawingRef.current = false
     lastPos.current = null
-  }, [onUpdate, page.id])
+  }, [])
 
   const undoStroke = () => {
     if (strokeHistory.current.length === 0) return
     const prev = strokeHistory.current.pop()
     const canvas = canvasRef.current
     canvas.getContext('2d').putImageData(prev, 0, 0)
-    if (canvas?.width > 0) onUpdate(page.id, 'drawing', canvas.toDataURL())
   }
 
   const exitDrawMode = () => {
     setDrawMode(false)
+    setEditingDrawingId(null)
     strokeHistory.current = []
     setIsEraser(false)
+  }
+
+  // ─── Bounding box + finish ─────────────────────────────
+  const getBoundingBox = (canvas) => {
+    const ctx = canvas.getContext('2d')
+    const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    let minX = width, minY = height, maxX = 0, maxY = 0
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const alpha = data[(y * width + x) * 4 + 3]
+        if (alpha > 10) {
+          if (x < minX) minX = x
+          if (x > maxX) maxX = x
+          if (y < minY) minY = y
+          if (y > maxY) maxY = y
+        }
+      }
+    }
+    if (minX > maxX || minY > maxY) return null
+    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
+  }
+
+  const finishDrawing = () => {
+    const canvas = canvasRef.current
+    if (!canvas) { exitDrawMode(); return }
+
+    const bbox = getBoundingBox(canvas)
+    if (!bbox) { exitDrawMode(); return }
+
+    const PAD = 16
+    const sx = Math.max(0, bbox.x - PAD)
+    const sy = Math.max(0, bbox.y - PAD)
+    const sw = Math.min(canvas.width - sx, bbox.w + PAD * 2)
+    const sh = Math.min(canvas.height - sy, bbox.h + PAD * 2)
+
+    const crop = document.createElement('canvas')
+    crop.width = sw
+    crop.height = sh
+    crop.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh)
+    const dataUrl = crop.toDataURL('image/png')
+
+    if (editingDrawingId) {
+      updateItem(editingDrawingId, { data: dataUrl })
+    } else {
+      const insertAfterIdx = activeItemId
+        ? items.findIndex(it => it.id === activeItemId)
+        : items.length - 1
+      const next = [...items]
+      next.splice(insertAfterIdx + 1, 0, { id: crypto.randomUUID(), type: 'drawing', data: dataUrl })
+      setItems(next)
+    }
+
+    exitDrawMode()
   }
 
   // Klik buiten de pagina → stop automatisch met tekenen
@@ -210,13 +255,6 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
     return () => document.removeEventListener('mousedown', handler)
   }, [drawMode])
 
-  const clearCanvas = () => {
-    const canvas = canvasRef.current
-    if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
-    strokeHistory.current = []
-    onUpdate(page.id, 'drawing', null)
-  }
-
   // ─── Render ────────────────────────────────────────────
   return (
     <div ref={setNodeRef} style={dndStyle} id={`page-${page.id}`} onClick={() => !drawMode && onSelect(page.id)}>
@@ -225,7 +263,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         style={{
           background: '#fff',
           borderRadius: '8px',
-          border: drawMode ? '1px solid #aaa' : isActive ? '1px solid #bbb' : '1px solid #dedad4',
+          border: drawMode ? '2px solid #2563EB' : isActive ? '1px solid #bbb' : '1px solid #dedad4',
           marginBottom: '4px',
           position: 'relative',
           boxShadow: isActive ? '0 2px 12px rgba(0,0,0,0.08)' : '0 1px 4px rgba(0,0,0,0.04)',
@@ -233,7 +271,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           minHeight: page.minHeight ? `${page.minHeight}px` : undefined,
         }}
       >
-        {/* DnD handle — klein icoontje links */}
+        {/* DnD handle */}
         {!drawMode && (
           <div {...attributes} {...listeners} style={{
             position: 'absolute', top: '8px', left: '10px',
@@ -344,7 +382,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
                 <DrawingBlock
                   key={item.id}
                   item={item}
-                  onUpdate={(id, patch) => updateItem(id, patch)}
+                  onEdit={(id) => { setEditingDrawingId(id); setDrawMode(true) }}
                   onRemove={removeItem}
                   isSelectedForAI={selectedDrawingId === item.id}
                   onSelectForAI={(it) => onSelectDrawing && onSelectDrawing(page.id, it)}
@@ -356,7 +394,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           })}
         </div>
 
-        {/* Tekening altijd zichtbaar als img buiten draw mode */}
+        {/* Legacy whole-page drawing (read-only, backwards compat) */}
         {page.drawing && !drawMode && (
           <img
             src={page.drawing}
@@ -384,7 +422,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           <div
             style={{
               position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
-              zIndex: 20, background: 'rgba(255,255,255,0.95)', borderRadius: '20px',
+              zIndex: 20, background: 'rgba(255,255,255,0.97)', borderRadius: '20px',
               padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '8px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.12)', border: '1px solid #e8e4de', whiteSpace: 'nowrap',
             }}
@@ -418,8 +456,24 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
               border: isEraser ? '1px solid #ccc' : '1px solid transparent',
               fontSize: '14px',
             }}>◻</button>
-            <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
             <button onClick={undoStroke} title="Ongedaan maken" style={toolBtnStyle}>↩</button>
+            <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
+            <button
+              onClick={finishDrawing}
+              style={{
+                padding: '4px 12px', fontSize: '12px', fontFamily: 'Georgia, serif',
+                background: '#1a1a1a', color: '#fff', border: 'none',
+                borderRadius: '10px', cursor: 'pointer', fontWeight: 600,
+              }}
+            >
+              Klaar
+            </button>
+            <button
+              onClick={exitDrawMode}
+              style={{ ...toolBtnStyle, fontSize: '12px', color: '#aaa' }}
+            >
+              Annuleer
+            </button>
           </div>
         )}
 
@@ -448,7 +502,10 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           <button onClick={() => onAdd(page.id, 'hoofdstuk')} style={addBtnStyle}>+ Hoofdstuk</button>
           <button onClick={() => onAdd(page.id, 'kop2')} style={addBtnStyle}>+ Kop 2</button>
           <button onClick={() => photoInputRef.current.click()} style={addBtnStyle}>+ Foto</button>
-          <button onClick={addDrawingItem} style={addBtnStyle}>✏ Tekenvak</button>
+          <button
+            onClick={() => { setEditingDrawingId(null); setDrawMode(true) }}
+            style={addBtnStyle}
+          >✏ Tekenen</button>
           <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
         </div>
       )}
