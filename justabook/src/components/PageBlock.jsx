@@ -150,13 +150,15 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           {items.map((item) => {
             if (item.type === 'text') {
               return (
-                <AutoTextarea
-                  key={item.id}
-                  value={item.content}
-                  onChange={val => updateItem(item.id, { content: val })}
-                  onFocus={() => setActiveItemId(item.id)}
-                  onShiftEnter={() => onAdd(page.id, 'hoofdstuk')}
-                />
+                // overflow:hidden creates a BFC so text flows beside floated drawing blocks
+                <div key={item.id} style={{ overflow: 'hidden' }}>
+                  <AutoTextarea
+                    value={item.content}
+                    onChange={val => updateItem(item.id, { content: val })}
+                    onFocus={() => setActiveItemId(item.id)}
+                    onShiftEnter={() => onAdd(page.id, 'hoofdstuk')}
+                  />
+                </div>
               )
             }
 

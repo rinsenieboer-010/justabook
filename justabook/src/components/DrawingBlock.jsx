@@ -5,6 +5,7 @@ const PEN_SIZES = [2, 4, 8]
 
 export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, isSelectedForAI }) {
   const canvasRef = useRef(null)
+  const wrapperRef = useRef(null)
   const drawingRef = useRef(false)
   const lastPos = useRef(null)
   const strokeHistory = useRef([])
@@ -15,6 +16,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
   const [showTools, setShowTools] = useState(false)
 
   const height = item.height || 240
+  const width = item.width || null // null = full width
 
   // Init canvas on mount
   useEffect(() => {
@@ -94,14 +96,13 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
     onUpdate(item.id, { data: dataUrl })
   }
 
-  // Resize: CSS height changes live; buffer resizes on mouseup
-  const startResize = (e) => {
+  // Height resize (bottom handle)
+  const startHeightResize = (e) => {
     e.preventDefault()
     e.stopPropagation()
     const startY = e.clientY
     const startH = height
     let finalH = startH
-
     const onMove = (ev) => {
       finalH = Math.max(80, startH + (ev.clientY - startY))
       onUpdate(item.id, { height: finalH })
@@ -109,7 +110,6 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
     const onUp = () => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
-      // Resize canvas buffer to match new height, preserving drawing
       const canvas = canvasRef.current
       if (!canvas) return
       const current = savedData.current
@@ -124,8 +124,50 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
     window.addEventListener('mouseup', onUp)
   }
 
+  // Width resize (right handle)
+  const startWidthResize = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const startX = e.clientX
+    const containerWidth = wrapperRef.current?.parentElement?.offsetWidth || 600
+    const startW = width || containerWidth
+    let finalW = startW
+    const onMove = (ev) => {
+      finalW = Math.max(80, Math.min(containerWidth, startW + (ev.clientX - startX)))
+      onUpdate(item.id, { width: finalW >= containerWidth - 8 ? null : finalW })
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const current = savedData.current
+      canvas.width = finalW >= containerWidth - 8 ? containerWidth : finalW
+      canvas.height = height
+      if (current) {
+        const img = new Image()
+        img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        img.src = current
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  const isNarrowed = width !== null
+
   return (
-    <div style={{ marginBottom: '8px', userSelect: 'none' }}>
+    <div
+      ref={wrapperRef}
+      style={{
+        float: isNarrowed ? 'left' : 'none',
+        width: isNarrowed ? `${width}px` : '100%',
+        marginRight: isNarrowed ? '12px' : 0,
+        marginBottom: '8px',
+        userSelect: 'none',
+        boxSizing: 'border-box',
+      }}
+    >
       {/* Canvas area */}
       <div style={{
         position: 'relative',
@@ -152,9 +194,10 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
             touchAction: 'none',
           }}
         />
-        {/* Resize handle */}
+
+        {/* Bottom resize handle */}
         <div
-          onMouseDown={startResize}
+          onMouseDown={startHeightResize}
           style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
             height: '14px', cursor: 'ns-resize',
@@ -164,9 +207,22 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
         >
           <div style={{ width: '32px', height: '4px', borderRadius: '2px', background: '#d5d0c8' }} />
         </div>
+
+        {/* Right resize handle */}
+        <div
+          onMouseDown={startWidthResize}
+          style={{
+            position: 'absolute', top: 0, right: 0, bottom: 0,
+            width: '14px', cursor: 'ew-resize',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(to left, rgba(0,0,0,0.03), transparent)',
+          }}
+        >
+          <div style={{ width: '4px', height: '32px', borderRadius: '2px', background: '#d5d0c8' }} />
+        </div>
       </div>
 
-      {/* Drawing tools — shown after first touch */}
+      {/* Drawing tools */}
       {showTools && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px', flexWrap: 'wrap' }}>
           {COLORS.map(c => (
@@ -215,7 +271,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
             cursor: 'pointer',
           }}
         >
-          {isSelectedForAI ? '✓ Voor AI' : 'Selecteer voor AI'}
+          {isSelectedForAI ? '✓ Voor AI' : 'AI'}
         </button>
         <div style={{ flex: 1 }} />
         <button
@@ -225,7 +281,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
             border: '1px solid #f0c0c0', borderRadius: '4px',
             background: 'none', color: '#e03030', cursor: 'pointer',
           }}
-        >✕ verwijder</button>
+        >✕</button>
       </div>
     </div>
   )
