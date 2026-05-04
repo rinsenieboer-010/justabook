@@ -372,7 +372,10 @@ export default function App() {
         onDelete={deletePage}
         onReorder={reorderPages}
       />
-      <AiPanel activePageId={activePageId} />
+      <AiPanel
+        activePage={pages.find(p => p.id === activePageId)}
+        onUpdate={updatePage}
+      />
     </div>
   )
 }
