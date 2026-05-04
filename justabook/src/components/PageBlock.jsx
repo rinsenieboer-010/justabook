@@ -222,12 +222,37 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           minHeight: page.minHeight ? `${page.minHeight}px` : undefined,
         }}
       >
-        {/* Drag handle */}
+        {/* DnD handle — klein icoontje links */}
         {!drawMode && (
           <div {...attributes} {...listeners} style={{
-            position: 'absolute', top: '8px', left: '50%', transform: 'translateX(-50%)',
-            width: '32px', height: '4px', borderRadius: '2px', background: '#d5d0c8', cursor: 'grab', zIndex: 2,
-          }} />
+            position: 'absolute', top: '8px', left: '10px',
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px',
+            width: '12px', cursor: 'grab', zIndex: 2, padding: '2px',
+          }}>
+            {[...Array(6)].map((_, i) => (
+              <div key={i} style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d5d0c8' }} />
+            ))}
+          </div>
+        )}
+
+        {/* Top resize handle */}
+        {!drawMode && (
+          <div
+            onMouseDown={e => {
+              e.preventDefault(); e.stopPropagation()
+              const startY = e.clientY
+              const startH = containerRef.current.offsetHeight
+              const onMove = ev => onUpdate(page.id, 'minHeight', Math.max(80, startH + (startY - ev.clientY)))
+              const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+              window.addEventListener('mousemove', onMove)
+              window.addEventListener('mouseup', onUp)
+            }}
+            style={{
+              position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
+              width: '32px', height: '4px', borderRadius: '2px', background: '#d5d0c8',
+              cursor: 'ns-resize', zIndex: 2,
+            }}
+          />
         )}
 
         {/* Type label */}
