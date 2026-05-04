@@ -186,7 +186,12 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
           </button>
           <div style={{ flex: 1 }} />
           <div onMouseDown={startResize} style={{ padding: '2px 8px', fontSize: '11px', color: '#ccc', cursor: 'ns-resize', fontFamily: 'Georgia, serif', border: '1px solid #e8e4de', borderRadius: '4px' }}>↕</div>
-          <button onClick={(e) => { e.stopPropagation(); onRemove(item.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#ccc', fontFamily: 'Georgia, serif', padding: '0 4px' }}>✕</button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(item.id) }}
+            style={{ background: 'none', border: '1px solid #f0c0c0', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', color: '#e03030', fontFamily: 'Georgia, serif', padding: '2px 8px' }}
+          >
+            ✕ verwijder
+          </button>
         </div>
       )}
     </div>
