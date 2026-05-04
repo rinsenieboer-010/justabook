@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
+import AiPanel from './components/AiPanel'
 import { supabase } from './supabase'
 import {
   loadBooks as loadBooksDB,
@@ -371,6 +372,7 @@ export default function App() {
         onDelete={deletePage}
         onReorder={reorderPages}
       />
+      <AiPanel activePageId={activePageId} />
     </div>
   )
 }
