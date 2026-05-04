@@ -296,21 +296,24 @@ export default function App() {
 
   const addPage = (afterId = null, type = 'hoofdstuk') => {
     const newPage = createPage(type === 'kop2' ? 'Kop 2' : 'Hoofdstuk', type)
-    // Compute sortOrder synchronously from current pages — before setBooks runs
     const currentPages = activeBook?.pages ?? []
-    const sortOrder = afterId
-      ? currentPages.findIndex(p => p.id === afterId) + 1
-      : currentPages.length
 
-    updateBookPages(activeBook.id, pages => {
-      if (!afterId) return [...pages, newPage]
-      const idx = pages.findIndex(p => p.id === afterId)
-      const next = [...pages]
-      next.splice(idx + 1, 0, newPage)
-      return next
-    })
+    // Compute the full new pages array synchronously
+    let newPages
+    if (!afterId) {
+      newPages = [...currentPages, newPage]
+    } else {
+      const idx = currentPages.findIndex(p => p.id === afterId)
+      newPages = [...currentPages]
+      newPages.splice(idx + 1, 0, newPage)
+    }
+
+    updateBookPages(activeBook.id, () => newPages)
     setActivePageId(newPage.id)
-    addPageDB(session.user.id, activeBook.id, newPage, sortOrder)
+
+    // Insert page then reorder ALL pages so sort_orders are always gap-free and unique
+    addPageDB(session.user.id, activeBook.id, newPage, newPages.indexOf(newPage))
+      .then(() => reorderPagesDB(newPages))
   }
 
   const updatePage = (id, field, value) => {
