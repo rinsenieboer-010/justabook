@@ -21,77 +21,91 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
   const [drawResult, setDrawResult] = useState(null)
   const [error, setError] = useState(null)
 
+  const hasSketch = !!selectedDrawing?.dataUrl
+  const hasText = drawInput.trim().length > 0
+
   const getPageText = () => {
     if (!activePage?.items) return ''
-    return activePage.items
-      .filter(it => it.type === 'text')
-      .map(it => it.content)
-      .join('\n---\n')
+    return activePage.items.filter(it => it.type === 'text').map(it => it.content).join('\n---\n')
   }
 
   const applyTextResult = (result) => {
     if (!activePage) return
     const parts = result.split('\n---\n')
     const textItems = activePage.items.filter(it => it.type === 'text')
-    const otherItems = activePage.items.filter(it => it.type !== 'text')
-
-    const updatedTextItems = textItems.map((item, i) => ({
-      ...item,
-      content: parts[i] ?? item.content,
-    }))
-
-    // Rebuild items in original order, replacing text items with updated ones
     let textIdx = 0
     const newItems = activePage.items.map(it =>
-      it.type === 'text' ? updatedTextItems[textIdx++] : it
+      it.type === 'text' ? { ...textItems[textIdx], content: parts[textIdx++] ?? textItems[textIdx - 1].content } : it
     )
     onUpdate(activePage.id, 'items', newItems)
   }
 
-  const runAction = async (action) => {
+  const runTextAction = async (action) => {
     setError(null)
     setLoading(action)
-
     try {
-      if (action === 'refine_sketch') {
-        if (!selectedDrawing?.dataUrl) throw new Error('Geen tekening geselecteerd')
+      if (!activePage) return
+      const content = getPageText()
+      if (!content.trim()) return
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action, content }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      applyTextResult(data.result)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const runDrawingHelp = async () => {
+    if (!hasSketch && !hasText) return
+    setError(null)
+    setDrawResult(null)
+    setLoading('tekenhulp')
+    try {
+      if (hasSketch) {
+        // Sketch (+ optional text instruction) → generate SVG → update drawing block
         const res = await fetch('/api/ai', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ action: 'refine_sketch', imageData: selectedDrawing.dataUrl }),
+          body: JSON.stringify({
+            action: 'refine_sketch',
+            imageData: selectedDrawing.dataUrl,
+            hint: hasText ? drawInput.trim() : undefined,
+          }),
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
         const pngDataUrl = await svgToDataUrl(data.result)
         onUpdateDrawing(selectedDrawing.pageId, selectedDrawing.itemId, pngDataUrl)
-      } else if (action === 'drawing') {
-        if (!drawInput.trim()) { setLoading(null); return }
+      } else {
+        // Text only → generate step-by-step drawing instructions
         const res = await fetch('/api/ai', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ action, content: drawInput }),
+          body: JSON.stringify({ action: 'drawing', content: drawInput.trim() }),
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
         setDrawResult(data.result)
-      } else {
-        if (!activePage) { setLoading(null); return }
-        const content = getPageText()
-        if (!content.trim()) { setLoading(null); return }
-        const res = await fetch('/api/ai', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ action, content }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error)
-        applyTextResult(data.result)
       }
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(null)
     }
+  }
+
+  const btnLabel = () => {
+    if (loading === 'tekenhulp') return 'Bezig...'
+    if (hasSketch && hasText) return 'Verbeter schets met instructie'
+    if (hasSketch) return 'Maak schets netjes'
+    return 'Tekenstappen genereren'
   }
 
   return (
@@ -129,9 +143,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
           color: '#f0ede8',
           fontFamily: 'Georgia, serif',
           userSelect: 'none',
-        }}>
-          AI
-        </span>
+        }}>AI</span>
       </button>
 
       {/* Panel */}
@@ -164,66 +176,53 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
             </div>
           )}
 
+          {/* Tekst acties */}
           <ActionBtn
             label="Spellingfouten corrigeren"
-            description="Corrigeert spelfouten in de actieve pagina zonder de inhoud te veranderen."
+            description="Corrigeert spelfouten zonder inhoud te veranderen."
             loading={loading === 'spelling'}
             disabled={!!loading}
-            onClick={() => runAction('spelling')}
+            onClick={() => runTextAction('spelling')}
           />
-
           <ActionBtn
             label="Structuur verbeteren"
-            description="Herstructureert alinea's en overgangen — inhoud blijft hetzelfde."
+            description="Herstructureert alinea's — inhoud blijft hetzelfde."
             loading={loading === 'structure'}
             disabled={!!loading}
-            onClick={() => runAction('structure')}
+            onClick={() => runTextAction('structure')}
           />
 
-          {/* Schets verfijnen */}
-          <div style={{ marginTop: '4px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#aaa', fontFamily: 'Georgia, serif', marginBottom: '6px' }}>
-              Schets verfijnen
+          {/* Tekenhulp */}
+          <div style={{ marginTop: '4px', borderTop: '1px solid #27272a', paddingTop: '12px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#aaa', fontFamily: 'Georgia, serif', marginBottom: '8px' }}>
+              Tekenhulp
             </div>
-            {selectedDrawing?.dataUrl ? (
+
+            {/* Selected sketch preview */}
+            {hasSketch ? (
               <div style={{ marginBottom: '8px' }}>
                 <img
                   src={selectedDrawing.dataUrl}
                   alt="Geselecteerde schets"
-                  style={{ width: '100%', borderRadius: '6px', border: '2px solid #2563EB', display: 'block', objectFit: 'contain', maxHeight: '100px', background: '#fafaf7' }}
+                  style={{ width: '100%', borderRadius: '6px', border: '2px solid #2563EB', display: 'block', objectFit: 'contain', maxHeight: '90px', background: '#fafaf7' }}
                 />
+                <div style={{ fontSize: '10px', color: '#555', fontFamily: 'Georgia, serif', marginTop: '3px' }}>
+                  Schets geselecteerd
+                </div>
               </div>
             ) : (
-              <p style={{ fontSize: '11px', color: '#555', fontFamily: 'Georgia, serif', marginBottom: '8px', lineHeight: 1.5 }}>
-                Klik "Selecteer voor AI" onder een tekenvak.
-              </p>
+              <div style={{ fontSize: '11px', color: '#555', fontFamily: 'Georgia, serif', marginBottom: '8px', lineHeight: 1.5 }}>
+                Selecteer een tekening via "Selecteer voor AI", of typ een beschrijving hieronder.
+              </div>
             )}
-            <button
-              onClick={() => runAction('refine_sketch')}
-              disabled={!!loading || !selectedDrawing?.dataUrl}
-              style={{
-                width: '100%', padding: '8px 0',
-                background: loading === 'refine_sketch' ? '#27272a' : '#2563EB',
-                border: 'none', borderRadius: '6px',
-                cursor: loading || !selectedDrawing?.dataUrl ? 'not-allowed' : 'pointer',
-                fontFamily: 'Georgia, serif', fontSize: '12px', fontWeight: 600, color: '#fff',
-                opacity: !selectedDrawing?.dataUrl ? 0.4 : 1,
-                transition: 'opacity 0.15s',
-              }}
-            >
-              {loading === 'refine_sketch' ? 'Bezig...' : 'Maak schets netjes'}
-            </button>
-          </div>
 
-          {/* Tekening sectie */}
-          <div style={{ marginTop: '4px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#aaa', fontFamily: 'Georgia, serif', marginBottom: '6px' }}>
-              Tekening maken
-            </div>
+            {/* Text input */}
             <textarea
               value={drawInput}
               onChange={e => { setDrawInput(e.target.value); setDrawResult(null) }}
-              placeholder="Beschrijf wat je wil tekenen..."
+              placeholder={hasSketch
+                ? 'Optioneel: instructie voor de schets...'
+                : 'Beschrijf wat je wil tekenen...'}
               rows={3}
               style={{
                 width: '100%', boxSizing: 'border-box',
@@ -234,27 +233,31 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
                 lineHeight: 1.5,
               }}
             />
+
+            {/* Action button */}
             <button
-              onClick={() => runAction('drawing')}
-              disabled={!!loading || !drawInput.trim()}
+              onClick={runDrawingHelp}
+              disabled={!!loading || (!hasSketch && !hasText)}
               style={{
                 marginTop: '6px',
                 width: '100%',
                 padding: '8px 0',
-                background: loading === 'drawing' ? '#27272a' : '#E6B400',
+                background: loading === 'tekenhulp' ? '#27272a' : hasSketch ? '#2563EB' : '#E6B400',
                 border: 'none',
                 borderRadius: '6px',
-                cursor: loading || !drawInput.trim() ? 'not-allowed' : 'pointer',
+                cursor: (loading || (!hasSketch && !hasText)) ? 'not-allowed' : 'pointer',
                 fontFamily: 'Georgia, serif',
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#1a1a1a',
-                opacity: !drawInput.trim() ? 0.4 : 1,
-                transition: 'opacity 0.15s',
+                color: hasSketch ? '#fff' : '#1a1a1a',
+                opacity: (!hasSketch && !hasText) ? 0.4 : 1,
+                transition: 'opacity 0.15s, background 0.15s',
               }}
             >
-              {loading === 'drawing' ? 'Bezig...' : 'Tekenstappen genereren'}
+              {btnLabel()}
             </button>
+
+            {/* Text-only result (drawing steps) */}
             {drawResult && (
               <div style={{
                 marginTop: '8px',
@@ -298,7 +301,7 @@ function ActionBtn({ label, description, loading, disabled, onClick }) {
       style={{
         width: '100%',
         padding: '10px 12px',
-        background: loading ? '#27272a' : '#27272a',
+        background: '#27272a',
         border: '1px solid #3f3f46',
         borderRadius: '8px',
         cursor: disabled ? 'not-allowed' : 'pointer',

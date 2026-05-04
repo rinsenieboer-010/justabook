@@ -16,6 +16,8 @@ export default async function handler(req, res) {
     if (action === 'refine_sketch') {
       if (!imageData) return res.status(400).json({ error: 'imageData ontbreekt' })
       const base64 = imageData.includes(',') ? imageData.split(',')[1] : imageData
+      const { hint } = req.body
+      const hintLine = hint ? `\n\nGebruik deze instructie als leidraad: "${hint}"` : ''
 
       requestBody = {
         model: 'claude-sonnet-4-6',
@@ -29,7 +31,7 @@ export default async function handler(req, res) {
             },
             {
               type: 'text',
-              text: `Dit is een ruwe schets gemaakt door de gebruiker. Maak er een nette, complete SVG-illustratie van die weergeeft wat in de schets staat getekend.
+              text: `Dit is een ruwe schets gemaakt door de gebruiker. Maak er een nette, complete SVG-illustratie van die weergeeft wat in de schets staat getekend.${hintLine}
 
 Regels:
 - viewBox="0 0 800 400"
