@@ -1,8 +1,22 @@
 import { useState } from 'react'
 
-export default function AiPanel({ activePage, onUpdate }) {
+const svgToDataUrl = (svgString) => new Promise((resolve, reject) => {
+  const canvas = document.createElement('canvas')
+  canvas.width = 800; canvas.height = 400
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#fafaf7'
+  ctx.fillRect(0, 0, 800, 400)
+  const img = new Image()
+  const blob = new Blob([svgString], { type: 'image/svg+xml' })
+  const url = URL.createObjectURL(blob)
+  img.onload = () => { ctx.drawImage(img, 0, 0, 800, 400); URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/png')) }
+  img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG laden mislukt')) }
+  img.src = url
+})
+
+export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, onUpdate }) {
   const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(null) // 'spelling' | 'structure' | 'drawing'
+  const [loading, setLoading] = useState(null)
   const [drawInput, setDrawInput] = useState('')
   const [drawResult, setDrawResult] = useState(null)
   const [error, setError] = useState(null)
@@ -35,25 +49,42 @@ export default function AiPanel({ activePage, onUpdate }) {
   }
 
   const runAction = async (action) => {
-    if (!activePage) return
     setError(null)
     setLoading(action)
 
-    const content = action === 'drawing' ? drawInput : getPageText()
-    if (!content.trim()) { setLoading(null); return }
-
     try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ action, content }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-
-      if (action === 'drawing') {
+      if (action === 'refine_sketch') {
+        if (!selectedDrawing?.dataUrl) throw new Error('Geen tekening geselecteerd')
+        const res = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'refine_sketch', imageData: selectedDrawing.dataUrl }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
+        const pngDataUrl = await svgToDataUrl(data.result)
+        onUpdateDrawing(selectedDrawing.pageId, selectedDrawing.itemId, pngDataUrl)
+      } else if (action === 'drawing') {
+        if (!drawInput.trim()) { setLoading(null); return }
+        const res = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action, content: drawInput }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
         setDrawResult(data.result)
       } else {
+        if (!activePage) { setLoading(null); return }
+        const content = getPageText()
+        if (!content.trim()) { setLoading(null); return }
+        const res = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action, content }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
         applyTextResult(data.result)
       }
     } catch (e) {
@@ -148,6 +179,41 @@ export default function AiPanel({ activePage, onUpdate }) {
             disabled={!!loading}
             onClick={() => runAction('structure')}
           />
+
+          {/* Schets verfijnen */}
+          <div style={{ marginTop: '4px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#aaa', fontFamily: 'Georgia, serif', marginBottom: '6px' }}>
+              Schets verfijnen
+            </div>
+            {selectedDrawing?.dataUrl ? (
+              <div style={{ marginBottom: '8px' }}>
+                <img
+                  src={selectedDrawing.dataUrl}
+                  alt="Geselecteerde schets"
+                  style={{ width: '100%', borderRadius: '6px', border: '2px solid #2563EB', display: 'block', objectFit: 'contain', maxHeight: '100px', background: '#fafaf7' }}
+                />
+              </div>
+            ) : (
+              <p style={{ fontSize: '11px', color: '#555', fontFamily: 'Georgia, serif', marginBottom: '8px', lineHeight: 1.5 }}>
+                Klik "Selecteer voor AI" onder een tekenvak.
+              </p>
+            )}
+            <button
+              onClick={() => runAction('refine_sketch')}
+              disabled={!!loading || !selectedDrawing?.dataUrl}
+              style={{
+                width: '100%', padding: '8px 0',
+                background: loading === 'refine_sketch' ? '#27272a' : '#2563EB',
+                border: 'none', borderRadius: '6px',
+                cursor: loading || !selectedDrawing?.dataUrl ? 'not-allowed' : 'pointer',
+                fontFamily: 'Georgia, serif', fontSize: '12px', fontWeight: 600, color: '#fff',
+                opacity: !selectedDrawing?.dataUrl ? 0.4 : 1,
+                transition: 'opacity 0.15s',
+              }}
+            >
+              {loading === 'refine_sketch' ? 'Bezig...' : 'Maak schets netjes'}
+            </button>
+          </div>
 
           {/* Tekening sectie */}
           <div style={{ marginTop: '4px' }}>

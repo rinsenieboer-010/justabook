@@ -14,7 +14,7 @@ import {
 } from '@dnd-kit/sortable'
 import PageBlock from './PageBlock'
 
-export default function Editor({ pages, activeId, onSelect, onUpdate, onAdd, onDelete, onReorder }) {
+export default function Editor({ pages, activeId, onSelect, onUpdate, onAdd, onDelete, onReorder, selectedDrawingId, onSelectDrawing }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -46,6 +46,8 @@ export default function Editor({ pages, activeId, onSelect, onUpdate, onAdd, onD
               onUpdate={onUpdate}
               onAdd={onAdd}
               onDelete={onDelete}
+              selectedDrawingId={selectedDrawingId}
+              onSelectDrawing={onSelectDrawing}
             />
           ))}
         </SortableContext>

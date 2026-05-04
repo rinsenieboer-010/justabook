@@ -212,6 +212,7 @@ export default function App() {
   const [activePageId, setActivePageId] = useState(null)
   const [sidebarOpen, setSidebarOpen]   = useState(true)
   const [loading, setLoading]           = useState(false)
+  const [selectedDrawing, setSelectedDrawing] = useState(null) // { pageId, itemId, dataUrl }
 
   // Debounce timers for page content updates
   const updateTimers = useRef({})
@@ -371,9 +372,24 @@ export default function App() {
         onAdd={addPage}
         onDelete={deletePage}
         onReorder={reorderPages}
+        selectedDrawingId={selectedDrawing?.itemId}
+        onSelectDrawing={(pageId, item) =>
+          setSelectedDrawing(prev =>
+            prev?.itemId === item.id ? null : { pageId, itemId: item.id, dataUrl: item.data }
+          )
+        }
       />
       <AiPanel
         activePage={pages.find(p => p.id === activePageId)}
+        selectedDrawing={selectedDrawing}
+        onUpdateDrawing={(pageId, itemId, newData) => {
+          updatePage(pageId, 'items',
+            pages.find(p => p.id === pageId)?.items.map(it =>
+              it.id === itemId ? { ...it, data: newData } : it
+            ) ?? []
+          )
+          setSelectedDrawing(prev => prev ? { ...prev, dataUrl: newData } : null)
+        }}
         onUpdate={updatePage}
       />
     </div>

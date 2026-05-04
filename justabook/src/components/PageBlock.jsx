@@ -1,13 +1,15 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import DrawingBlock from './DrawingBlock'
 
 const COLORS = ['#1a1a1a', '#555', '#e03030', '#2060d0', '#e8a020', '#20a050']
 const PEN_SIZES = [2, 5, 10]
 
-const newTextItem = (content = '') => ({ id: crypto.randomUUID(), type: 'text', content })
+const newTextItem    = (content = '') => ({ id: crypto.randomUUID(), type: 'text', content })
+const newDrawingItem = ()             => ({ id: crypto.randomUUID(), type: 'drawing', data: null, height: 200 })
 
-export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, onDelete }) {
+export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, onDelete, selectedDrawingId, onSelectDrawing }) {
   const canvasRef = useRef(null)
   const containerRef = useRef(null)
   const photoInputRef = useRef(null)
@@ -48,6 +50,15 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
 
   const updateItem = (itemId, patch) =>
     setItems(items.map(it => it.id === itemId ? { ...it, ...patch } : it))
+
+  const addDrawingItem = () => {
+    const insertAfterIdx = activeItemId
+      ? items.findIndex(it => it.id === activeItemId)
+      : items.length - 1
+    const next = [...items]
+    next.splice(insertAfterIdx + 1, 0, newDrawingItem())
+    setItems(next)
+  }
 
   const removeItem = (itemId) => {
     const next = items.filter(it => it.id !== itemId)
@@ -328,6 +339,19 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
               )
             }
 
+            if (item.type === 'drawing') {
+              return (
+                <DrawingBlock
+                  key={item.id}
+                  item={item}
+                  onUpdate={(id, patch) => updateItem(id, patch)}
+                  onRemove={removeItem}
+                  isSelectedForAI={selectedDrawingId === item.id}
+                  onSelectForAI={(it) => onSelectDrawing && onSelectDrawing(page.id, it)}
+                />
+              )
+            }
+
             return null
           })}
         </div>
@@ -424,7 +448,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           <button onClick={() => onAdd(page.id, 'hoofdstuk')} style={addBtnStyle}>+ Hoofdstuk</button>
           <button onClick={() => onAdd(page.id, 'kop2')} style={addBtnStyle}>+ Kop 2</button>
           <button onClick={() => photoInputRef.current.click()} style={addBtnStyle}>+ Foto</button>
-          <button onClick={() => setDrawMode(true)} style={addBtnStyle}>✏ Tekenen</button>
+          <button onClick={addDrawingItem} style={addBtnStyle}>✏ Tekenvak</button>
           <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
         </div>
       )}
