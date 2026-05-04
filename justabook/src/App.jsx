@@ -296,14 +296,15 @@ export default function App() {
 
   const addPage = (afterId = null, type = 'hoofdstuk') => {
     const newPage = createPage(type === 'kop2' ? 'Kop 2' : 'Hoofdstuk', type)
-    let sortOrder = 0
+    // Compute sortOrder synchronously from current pages — before setBooks runs
+    const currentPages = activeBook?.pages ?? []
+    const sortOrder = afterId
+      ? currentPages.findIndex(p => p.id === afterId) + 1
+      : currentPages.length
+
     updateBookPages(activeBook.id, pages => {
-      if (!afterId) {
-        sortOrder = pages.length
-        return [...pages, newPage]
-      }
+      if (!afterId) return [...pages, newPage]
       const idx = pages.findIndex(p => p.id === afterId)
-      sortOrder = idx + 1
       const next = [...pages]
       next.splice(idx + 1, 0, newPage)
       return next
@@ -316,12 +317,17 @@ export default function App() {
     updateBookPages(activeBook.id, pages =>
       pages.map(p => p.id === id ? { ...p, [field]: value } : p)
     )
-    // Debounce content updates (text typing), immediately sync structural changes
+    // Debounce rapid-fire fields; sync structural changes immediately
     if (field === 'items') {
-      clearTimeout(updateTimers.current[id])
-      updateTimers.current[id] = setTimeout(() => {
+      clearTimeout(updateTimers.current[`${id}_items`])
+      updateTimers.current[`${id}_items`] = setTimeout(() => {
         updatePageDB({ id, [field]: value })
       }, 800)
+    } else if (field === 'minHeight') {
+      clearTimeout(updateTimers.current[`${id}_minHeight`])
+      updateTimers.current[`${id}_minHeight`] = setTimeout(() => {
+        updatePageDB({ id, minHeight: value })
+      }, 400)
     } else {
       updatePageDB({ id, [field]: value })
     }

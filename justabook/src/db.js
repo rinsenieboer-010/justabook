@@ -78,6 +78,7 @@ export async function addPageDB(userId, bookId, page, sortOrder = 0) {
       type: page.type,
       items: page.items,
       drawing: page.drawing,
+      min_height: page.minHeight || null,
       sort_order: sortOrder,
       created_at_display: page.createdAt,
     })
@@ -87,15 +88,14 @@ export async function addPageDB(userId, bookId, page, sortOrder = 0) {
 }
 
 export async function updatePageDB(page) {
-  await supabase
-    .from('jab_pages')
-    .update({
-      title: page.title,
-      type: page.type,
-      items: page.items,
-      drawing: page.drawing,
-    })
-    .eq('id', page.id)
+  const update = {}
+  if (page.title   !== undefined) update.title    = page.title
+  if (page.type    !== undefined) update.type     = page.type
+  if (page.items   !== undefined) update.items    = page.items
+  if (page.drawing !== undefined) update.drawing  = page.drawing
+  if (page.minHeight !== undefined) update.min_height = page.minHeight
+
+  await supabase.from('jab_pages').update(update).eq('id', page.id)
 }
 
 export async function deletePageDB(id) {
@@ -118,5 +118,6 @@ function dbToPage(r) {
     items: r.items || [],
     drawing: r.drawing || null,
     createdAt: r.created_at_display || '',
+    minHeight: r.min_height || undefined,
   }
 }
