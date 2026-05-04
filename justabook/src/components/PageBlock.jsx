@@ -109,12 +109,10 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
 
   // ─── Drawing canvas ────────────────────────────────────
   useEffect(() => {
-    if (!drawMode || !canvasRef.current || !containerRef.current) return
+    if (!drawMode || !canvasRef.current) return
     const canvas = canvasRef.current
-    const container = containerRef.current
-    canvas.width = container.offsetWidth
-    canvas.height = container.offsetHeight
-    // Clear first
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
     canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
 
     // Load existing drawing if editing
@@ -403,26 +401,30 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           />
         )}
 
-        {/* Drawing canvas overlay */}
+        {/* Drawing canvas overlay — fullscreen when active */}
         <canvas
           ref={canvasRef}
           onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
           onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
           style={{
-            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            position: drawMode ? 'fixed' : 'absolute',
+            top: 0, left: 0,
+            width: drawMode ? '100vw' : '100%',
+            height: drawMode ? '100vh' : '100%',
             pointerEvents: drawMode ? 'all' : 'none',
             cursor: drawMode ? (isEraser ? 'cell' : 'crosshair') : 'default',
-            zIndex: drawMode ? 10 : 0,
-            borderRadius: '8px',
+            zIndex: drawMode ? 999 : 0,
+            borderRadius: drawMode ? 0 : '8px',
+            background: drawMode ? 'rgba(255,255,255,0.92)' : 'transparent',
           }}
         />
 
-        {/* Draw toolbar */}
+        {/* Draw toolbar — fixed at top center when drawing */}
         {drawMode && (
           <div
             style={{
-              position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
-              zIndex: 20, background: 'rgba(255,255,255,0.97)', borderRadius: '20px',
+              position: 'fixed', top: '16px', left: '50%', transform: 'translateX(-50%)',
+              zIndex: 1000, background: 'rgba(255,255,255,0.97)', borderRadius: '20px',
               padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '8px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.12)', border: '1px solid #e8e4de', whiteSpace: 'nowrap',
             }}
