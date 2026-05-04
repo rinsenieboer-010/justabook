@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import DrawingBlock from './DrawingBlock'
@@ -6,8 +7,7 @@ import DrawingBlock from './DrawingBlock'
 const COLORS = ['#1a1a1a', '#555', '#e03030', '#2060d0', '#e8a020', '#20a050']
 const PEN_SIZES = [2, 5, 10]
 
-const newTextItem    = (content = '') => ({ id: crypto.randomUUID(), type: 'text', content })
-const newDrawingItem = ()             => ({ id: crypto.randomUUID(), type: 'drawing', data: null })
+const newTextItem = (content = '') => ({ id: crypto.randomUUID(), type: 'text', content })
 
 export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, onDelete, selectedDrawingId, onSelectDrawing }) {
   const canvasRef = useRef(null)
@@ -31,33 +31,22 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
     e.stopPropagation()
     const startY = e.clientY
     const startH = containerRef.current.offsetHeight
-
-    const onMove = (ev) => {
-      const newH = Math.max(80, startH + (ev.clientY - startY))
-      onUpdate(page.id, 'minHeight', newH)
-    }
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-    }
+    const onMove = (ev) => onUpdate(page.id, 'minHeight', Math.max(80, startH + (ev.clientY - startY)))
+    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
   }
 
   const items = page.items || [newTextItem()]
-
-  // ─── Items helpers ─────────────────────────────────────
   const setItems = (newItems) => onUpdate(page.id, 'items', newItems)
-
   const updateItem = (itemId, patch) =>
     setItems(items.map(it => it.id === itemId ? { ...it, ...patch } : it))
-
   const removeItem = (itemId) => {
     const next = items.filter(it => it.id !== itemId)
     setItems(next.length === 0 ? [newTextItem()] : next)
   }
 
-  // ─── Insert photo into flow ────────────────────────────
+  // ─── Photo ─────────────────────────────────────────────
   const handlePhoto = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -69,11 +58,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         const w = Math.min(img.naturalWidth, maxW)
         const h = (img.naturalHeight / img.naturalWidth) * w
         const photoItem = { id: crypto.randomUUID(), type: 'image', src: ev.target.result, offsetX: 0, width: w, height: h }
-
-        const insertAfterIdx = activeItemId
-          ? items.findIndex(it => it.id === activeItemId)
-          : items.length - 1
-
+        const insertAfterIdx = activeItemId ? items.findIndex(it => it.id === activeItemId) : items.length - 1
         const next = [...items]
         next.splice(insertAfterIdx + 1, 0, photoItem)
         if (!next[insertAfterIdx + 2] || next[insertAfterIdx + 2].type !== 'text') {
@@ -87,27 +72,18 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
     e.target.value = ''
   }
 
-  // ─── Horizontal image drag ─────────────────────────────
   const startImageDrag = (e, item) => {
     if (drawMode) return
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault(); e.stopPropagation()
     const startX = e.clientX
     const startOffset = item.offsetX || 0
-
-    const onMove = (ev) => {
-      const dx = ev.clientX - startX
-      updateItem(item.id, { offsetX: startOffset + dx })
-    }
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-    }
+    const onMove = (ev) => updateItem(item.id, { offsetX: startOffset + (ev.clientX - startX) })
+    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
   }
 
-  // ─── Drawing canvas ────────────────────────────────────
+  // ─── Canvas init (runs after portal canvas mounts) ─────
   useEffect(() => {
     if (!drawMode || !canvasRef.current) return
     const canvas = canvasRef.current
@@ -115,7 +91,6 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
     canvas.height = window.innerHeight
     canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
 
-    // Load existing drawing if editing
     if (editingDrawingId) {
       const editItem = items.find(it => it.id === editingDrawingId)
       if (editItem?.data) {
@@ -137,19 +112,19 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   }
 
   const startDraw = useCallback((e) => {
-    if (!drawMode) return
     e.preventDefault()
     const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    strokeHistory.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height))
+    if (!canvas) return
+    strokeHistory.current.push(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height))
     drawingRef.current = true
     lastPos.current = getCanvasPos(e, canvas)
-  }, [drawMode])
+  }, [])
 
   const draw = useCallback((e) => {
-    if (!drawingRef.current || !drawMode) return
+    if (!drawingRef.current) return
     e.preventDefault()
     const canvas = canvasRef.current
+    if (!canvas) return
     const ctx = canvas.getContext('2d')
     const pos = getCanvasPos(e, canvas)
     ctx.beginPath()
@@ -169,7 +144,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
     ctx.stroke()
     ctx.globalCompositeOperation = 'source-over'
     lastPos.current = pos
-  }, [drawMode, penColor, penSize, isEraser])
+  }, [penColor, penSize, isEraser])
 
   const stopDraw = useCallback(() => {
     drawingRef.current = false
@@ -178,27 +153,24 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
 
   const undoStroke = () => {
     if (strokeHistory.current.length === 0) return
-    const prev = strokeHistory.current.pop()
     const canvas = canvasRef.current
-    canvas.getContext('2d').putImageData(prev, 0, 0)
+    canvas.getContext('2d').putImageData(strokeHistory.current.pop(), 0, 0)
   }
 
-  const exitDrawMode = () => {
+  const exitDrawMode = useCallback(() => {
     setDrawMode(false)
     setEditingDrawingId(null)
     strokeHistory.current = []
     setIsEraser(false)
-  }
+  }, [])
 
   // ─── Bounding box + finish ─────────────────────────────
   const getBoundingBox = (canvas) => {
-    const ctx = canvas.getContext('2d')
-    const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const { data, width, height } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height)
     let minX = width, minY = height, maxX = 0, maxY = 0
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        const alpha = data[(y * width + x) * 4 + 3]
-        if (alpha > 10) {
+        if (data[(y * width + x) * 4 + 3] > 10) {
           if (x < minX) minX = x
           if (x > maxX) maxX = x
           if (y < minY) minY = y
@@ -206,14 +178,12 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         }
       }
     }
-    if (minX > maxX || minY > maxY) return null
-    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
+    return minX > maxX || minY > maxY ? null : { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
   }
 
-  const finishDrawing = () => {
+  const finishDrawing = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) { exitDrawMode(); return }
-
     const bbox = getBoundingBox(canvas)
     if (!bbox) { exitDrawMode(); return }
 
@@ -239,19 +209,8 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
       next.splice(insertAfterIdx + 1, 0, { id: crypto.randomUUID(), type: 'drawing', data: dataUrl })
       setItems(next)
     }
-
     exitDrawMode()
-  }
-
-  // Klik buiten de pagina → stop automatisch met tekenen
-  useEffect(() => {
-    if (!drawMode) return
-    const handler = (e) => {
-      if (!containerRef.current?.contains(e.target)) exitDrawMode()
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [drawMode])
+  }, [editingDrawingId, activeItemId, items, exitDrawMode])
 
   // ─── Render ────────────────────────────────────────────
   return (
@@ -261,7 +220,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         style={{
           background: '#fff',
           borderRadius: '8px',
-          border: drawMode ? '2px solid #2563EB' : isActive ? '1px solid #bbb' : '1px solid #dedad4',
+          border: isActive ? '1px solid #bbb' : '1px solid #dedad4',
           marginBottom: '4px',
           position: 'relative',
           boxShadow: isActive ? '0 2px 12px rgba(0,0,0,0.08)' : '0 1px 4px rgba(0,0,0,0.04)',
@@ -270,37 +229,33 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         }}
       >
         {/* DnD handle */}
-        {!drawMode && (
-          <div {...attributes} {...listeners} style={{
-            position: 'absolute', top: '8px', left: '10px',
-            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px',
-            width: '12px', cursor: 'grab', zIndex: 2, padding: '2px',
-          }}>
-            {[...Array(6)].map((_, i) => (
-              <div key={i} style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d5d0c8' }} />
-            ))}
-          </div>
-        )}
+        <div {...attributes} {...listeners} style={{
+          position: 'absolute', top: '8px', left: '10px',
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px',
+          width: '12px', cursor: 'grab', zIndex: 2, padding: '2px',
+        }}>
+          {[...Array(6)].map((_, i) => (
+            <div key={i} style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d5d0c8' }} />
+          ))}
+        </div>
 
         {/* Top resize handle */}
-        {!drawMode && (
-          <div
-            onMouseDown={e => {
-              e.preventDefault(); e.stopPropagation()
-              const startY = e.clientY
-              const startH = containerRef.current.offsetHeight
-              const onMove = ev => onUpdate(page.id, 'minHeight', Math.max(80, startH + (startY - ev.clientY)))
-              const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-              window.addEventListener('mousemove', onMove)
-              window.addEventListener('mouseup', onUp)
-            }}
-            style={{
-              position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
-              width: '32px', height: '4px', borderRadius: '2px', background: '#d5d0c8',
-              cursor: 'ns-resize', zIndex: 2,
-            }}
-          />
-        )}
+        <div
+          onMouseDown={e => {
+            e.preventDefault(); e.stopPropagation()
+            const startY = e.clientY
+            const startH = containerRef.current.offsetHeight
+            const onMove = ev => onUpdate(page.id, 'minHeight', Math.max(80, startH + (startY - ev.clientY)))
+            const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+            window.addEventListener('mousemove', onMove)
+            window.addEventListener('mouseup', onUp)
+          }}
+          style={{
+            position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
+            width: '32px', height: '4px', borderRadius: '2px', background: '#d5d0c8',
+            cursor: 'ns-resize', zIndex: 2,
+          }}
+        />
 
         {/* Type label */}
         <div style={{
@@ -312,7 +267,6 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
 
         {/* Content */}
         <div style={{ padding: '28px 16px 44px' }}>
-          {/* Title */}
           <input
             value={page.title}
             onChange={e => onUpdate(page.id, 'title', e.target.value)}
@@ -324,7 +278,6 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
             }}
           />
 
-          {/* Items in flow */}
           {items.map((item) => {
             if (item.type === 'text') {
               return (
@@ -347,7 +300,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
                     marginBottom: '8px',
                     display: 'inline-block',
                     position: 'relative',
-                    cursor: drawMode ? 'default' : 'grab',
+                    cursor: 'grab',
                     userSelect: 'none',
                     maxWidth: '100%',
                   }}
@@ -359,7 +312,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
                     style={{ width: item.width, maxWidth: '100%', display: 'block', borderRadius: '3px', pointerEvents: 'none' }}
                     alt=""
                   />
-                  {isActive && !drawMode && (
+                  {isActive && (
                     <button
                       onMouseDown={e => e.stopPropagation()}
                       onClick={() => removeItem(item.id)}
@@ -393,7 +346,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         </div>
 
         {/* Legacy whole-page drawing (read-only, backwards compat) */}
-        {page.drawing && !drawMode && (
+        {page.drawing && (
           <img
             src={page.drawing}
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', borderRadius: '8px' }}
@@ -401,32 +354,63 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           />
         )}
 
-        {/* Drawing canvas overlay — fullscreen when active */}
-        <canvas
-          ref={canvasRef}
-          onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
-          onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
+        {/* Footer */}
+        <div
+          onMouseDown={startResize}
           style={{
-            position: drawMode ? 'fixed' : 'absolute',
-            top: 0, left: 0,
-            width: drawMode ? '100vw' : '100%',
-            height: drawMode ? '100vh' : '100%',
-            pointerEvents: drawMode ? 'all' : 'none',
-            cursor: drawMode ? (isEraser ? 'cell' : 'crosshair') : 'default',
-            zIndex: drawMode ? 999 : 0,
-            borderRadius: drawMode ? 0 : '8px',
-            background: drawMode ? 'rgba(255,255,255,0.92)' : 'transparent',
+            position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)',
+            width: '32px', height: '4px', borderRadius: '2px', background: '#e8e4de',
+            zIndex: 1, cursor: 'ns-resize',
           }}
         />
+        <div style={{ position: 'absolute', bottom: '8px', right: '14px', fontSize: '11px', color: '#ccc', fontFamily: 'Georgia, serif', userSelect: 'none', zIndex: 1 }}>
+          {page.createdAt}
+        </div>
+        {isActive && (
+          <button onClick={e => { e.stopPropagation(); onDelete(page.id) }} style={{ position: 'absolute', bottom: '8px', left: '14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#ccc', padding: 0, zIndex: 1 }}>
+            ✕ verwijder
+          </button>
+        )}
+      </div>
 
-        {/* Draw toolbar — fixed at top center when drawing */}
-        {drawMode && (
+      {/* Action buttons */}
+      {isActive && (
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '4px 0 8px', flexWrap: 'wrap' }}>
+          <button onClick={() => onAdd(page.id, 'hoofdstuk')} style={addBtnStyle}>+ Hoofdstuk</button>
+          <button onClick={() => onAdd(page.id, 'kop2')} style={addBtnStyle}>+ Kop 2</button>
+          <button onClick={() => photoInputRef.current.click()} style={addBtnStyle}>+ Foto</button>
+          <button onClick={() => { setEditingDrawingId(null); setDrawMode(true) }} style={addBtnStyle}>✏ Tekenen</button>
+          <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
+        </div>
+      )}
+
+      {/* Drawing overlay — rendered via portal to escape DnD transform stacking context */}
+      {drawMode && createPortal(
+        <>
+          <canvas
+            ref={canvasRef}
+            onMouseDown={startDraw}
+            onMouseMove={draw}
+            onMouseUp={stopDraw}
+            onMouseLeave={stopDraw}
+            onTouchStart={startDraw}
+            onTouchMove={draw}
+            onTouchEnd={stopDraw}
+            style={{
+              position: 'fixed', top: 0, left: 0,
+              width: '100vw', height: '100vh',
+              cursor: isEraser ? 'cell' : 'crosshair',
+              zIndex: 999,
+              background: 'rgba(250,250,247,0.92)',
+              touchAction: 'none',
+            }}
+          />
           <div
             style={{
               position: 'fixed', top: '16px', left: '50%', transform: 'translateX(-50%)',
               zIndex: 1000, background: 'rgba(255,255,255,0.97)', borderRadius: '20px',
               padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '8px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.12)', border: '1px solid #e8e4de', whiteSpace: 'nowrap',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.18)', border: '1px solid #e8e4de', whiteSpace: 'nowrap',
             }}
             onMouseDown={e => e.stopPropagation()}
           >
@@ -450,82 +434,39 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
               </button>
             ))}
             <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
-            <button onClick={() => setIsEraser(v => !v)} title="Gummetje" style={{
-              ...toolBtnStyle,
+            <button onClick={() => setIsEraser(v => !v)} style={{
               background: isEraser ? '#f0ede8' : 'none',
-              borderRadius: '4px',
-              padding: '2px 4px',
+              borderRadius: '4px', padding: '2px 6px',
               border: isEraser ? '1px solid #ccc' : '1px solid transparent',
-              fontSize: '14px',
+              fontSize: '14px', cursor: 'pointer', color: '#888',
             }}>◻</button>
-            <button onClick={undoStroke} title="Ongedaan maken" style={toolBtnStyle}>↩</button>
+            <button onClick={undoStroke} style={toolBtnStyle}>↩</button>
             <div style={{ width: '1px', height: '16px', background: '#e0ddd8' }} />
             <button
               onClick={finishDrawing}
               style={{
-                padding: '4px 12px', fontSize: '12px', fontFamily: 'Georgia, serif',
+                padding: '5px 14px', fontSize: '12px', fontFamily: 'Georgia, serif',
                 background: '#1a1a1a', color: '#fff', border: 'none',
                 borderRadius: '10px', cursor: 'pointer', fontWeight: 600,
               }}
-            >
-              Klaar
-            </button>
-            <button
-              onClick={exitDrawMode}
-              style={{ ...toolBtnStyle, fontSize: '12px', color: '#aaa' }}
-            >
-              Annuleer
-            </button>
+            >Klaar</button>
+            <button onClick={exitDrawMode} style={{ ...toolBtnStyle, fontSize: '12px', color: '#aaa' }}>Annuleer</button>
           </div>
-        )}
-
-        {/* Footer */}
-        <div
-          onMouseDown={!drawMode ? startResize : undefined}
-          style={{
-            position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)',
-            width: '32px', height: '4px', borderRadius: '2px', background: '#e8e4de',
-            zIndex: 1, cursor: drawMode ? 'default' : 'ns-resize',
-          }}
-        />
-        <div style={{ position: 'absolute', bottom: '8px', right: '14px', fontSize: '11px', color: '#ccc', fontFamily: 'Georgia, serif', userSelect: 'none', zIndex: 1 }}>
-          {page.createdAt}
-        </div>
-        {isActive && !drawMode && (
-          <button onClick={e => { e.stopPropagation(); onDelete(page.id) }} style={{ position: 'absolute', bottom: '8px', left: '14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#ccc', padding: 0, zIndex: 1 }}>
-            ✕ verwijder
-          </button>
-        )}
-      </div>
-
-      {/* Action buttons */}
-      {isActive && (
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '4px 0 8px', flexWrap: 'wrap' }}>
-          <button onClick={() => onAdd(page.id, 'hoofdstuk')} style={addBtnStyle}>+ Hoofdstuk</button>
-          <button onClick={() => onAdd(page.id, 'kop2')} style={addBtnStyle}>+ Kop 2</button>
-          <button onClick={() => photoInputRef.current.click()} style={addBtnStyle}>+ Foto</button>
-          <button
-            onClick={() => { setEditingDrawingId(null); setDrawMode(true) }}
-            style={addBtnStyle}
-          >✏ Tekenen</button>
-          <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
-        </div>
+        </>,
+        document.body
       )}
     </div>
   )
 }
 
-// Auto-resizing textarea component
 function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
   const ref = useRef(null)
-
   useEffect(() => {
     if (ref.current) {
       ref.current.style.height = 'auto'
       ref.current.style.height = ref.current.scrollHeight + 'px'
     }
   }, [value])
-
   return (
     <textarea
       ref={ref}
@@ -533,10 +474,7 @@ function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
       onChange={e => onChange(e.target.value)}
       onFocus={onFocus}
       onKeyDown={e => {
-        if (e.key === 'Enter' && e.shiftKey) {
-          e.preventDefault()
-          onShiftEnter()
-        }
+        if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); onShiftEnter() }
       }}
       placeholder="Begin hier met typen..."
       rows={1}
