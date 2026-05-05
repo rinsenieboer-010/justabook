@@ -81,7 +81,8 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
-        const pngDataUrl = await svgToDataUrl(data.result)
+        // fal.ai geeft een data URL terug; Claude geeft SVG die we eerst omzetten
+        const pngDataUrl = data.type === 'image' ? data.result : await svgToDataUrl(data.result)
         onUpdateDrawing(selectedDrawing.pageId, selectedDrawing.itemId, pngDataUrl)
       } else {
         // Text only → generate step-by-step drawing instructions
