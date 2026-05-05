@@ -47,12 +47,10 @@ async function refineWithFal(base64, hint) {
     body: JSON.stringify({
       image_url: dataUrl,
       prompt,
-      strength: 0.80,
-      num_inference_steps: 28,
+      strength: 0.85,
+      num_inference_steps: 8,
       guidance_scale: 3.5,
-      image_size: { width: 800, height: 400 },
       num_images: 1,
-      enable_safety_checker: false,
     }),
   })
 
@@ -124,11 +122,13 @@ export default async function handler(req, res) {
           const dataUrl = await refineWithFal(base64, hint)
           return res.json({ result: dataUrl, type: 'image' })
         } catch (falErr) {
-          console.error('fal.ai mislukt, terugvallen op Claude SVG:', falErr.message)
+          console.error('fal.ai mislukt:', falErr.message)
+          // Stuur fal.ai fout mee in response zodat het zichtbaar is in de UI
+          return res.json({ error: 'fal.ai: ' + falErr.message })
         }
       }
 
-      // Fallback: Claude SVG
+      // Fallback: Claude SVG (alleen als geen FAL_KEY)
       const svgResult = await refineWithClaude(base64, hint, claudeHeaders)
       return res.json(svgResult)
     }
