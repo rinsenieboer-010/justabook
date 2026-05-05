@@ -104,9 +104,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
 
   const btnLabel = () => {
     if (loading === 'tekenhulp') return 'Bezig...'
-    if (hasSketch && hasText) return 'Verbeter schets met instructie'
-    if (hasSketch) return 'Maak schets netjes'
-    return 'Tekenstappen genereren'
+    return 'Enter'
   }
 
   return (
