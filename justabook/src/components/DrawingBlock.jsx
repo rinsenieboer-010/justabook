@@ -31,6 +31,18 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
     }
   }, [])
 
+  // Reageer op externe data-updates (bijv. AI-resultaat)
+  useEffect(() => {
+    if (!item.data || item.data === savedData.current) return
+    if (drawingRef.current) return
+    savedData.current = item.data
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const img = new Image()
+    img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+    img.src = item.data
+  }, [item.data])
+
   const getPos = (e, canvas) => {
     const rect = canvas.getBoundingClientRect()
     const clientX = e.touches ? e.touches[0].clientX : e.clientX

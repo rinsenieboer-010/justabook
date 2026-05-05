@@ -1,3 +1,47 @@
+function buildStyleGuide(hint) {
+  const h = hint.toLowerCase()
+  if (h.includes('van gogh') || h.includes('gogh')) {
+    return `Stijl: Van Gogh / post-impressionisme.
+- Gebruik DIKKE gebogen <path>-stroken (stroke-width 6-14) die draaien en golven, zoals echte penseelstreken
+- Levendige, expressieve kleuren: diepblauw (#1a3a6e), geel (#e8c020), oranje (#d4601a), groen (#2d6e2d)
+- Bewogen, spiralende lijnen voor lucht en achtergrond (zoals "Sterrennacht")
+- Geen vlakke rechthoeken of geometrische vormen — alles in organische penseelvegen
+- Donkere omlijning voor figuren, levendige kleurvlakken erbinnen gevuld met diagonale hacheerstrepen`
+  }
+  if (h.includes('monet') || h.includes('impressioni')) {
+    return `Stijl: Impressionisme (Monet).
+- Zachte, vage kleurvlekken via kleine <circle> en korte <line> elementen dicht op elkaar
+- Pastelkleuren: lichtblauw, lila, zacht groen, roze, crème
+- Geen scherpe lijnen — alles gesuggereerd door kleurvlekjes
+- Lichteffecten: lichte vlekken in het midden, donkerder aan de randen`
+  }
+  if (h.includes('picasso') || h.includes('cubis')) {
+    return `Stijl: Kubisme (Picasso).
+- Breek vormen op in geometrische vlakken: driehoeken, parallellogrammen, trapeziums
+- Toon meerdere perspectieven tegelijk (voorkant en zijkant van gezichten/objecten)
+- Gedempte kleuren: oker, grijs, bruin, zwart, met een enkel felle accentkleur
+- Harde rechte lijnen en hoeken`
+  }
+  if (h.includes('cartoon') || h.includes('comic') || h.includes('strip')) {
+    return `Stijl: Cartoon / comic strip.
+- Dikke zwarte omlijning (stroke-width 3-5, stroke="#111")
+- Heldere, verzadigde vlakkleuren zonder verloop
+- Expressieve, overdreven vormen
+- Eventueel kleine actie-details (bewegingslijntjes, sterretjes)`
+  }
+  if (h.includes('sketch') || h.includes('schets') || h.includes('potlood')) {
+    return `Stijl: Potloodschets.
+- Dunne grijze lijnen (stroke="#555", stroke-width 1-2)
+- Arcering via parallelle lijnen op schaduwdelen
+- Ruwe, iets onregelmatige lijnen (gebruik meerdere korte <path>-segmenten)
+- Witte/crème achtergrond, geen opvulkleuren`
+  }
+  return `Stijl gebaseerd op instructie: "${hint}".
+- Interpreteer de gewenste stijl zo nauwkeurig mogelijk in SVG
+- Gebruik kleuren, lijndikte en vormen die passen bij de stijl
+- Wees expressief en visueel aantrekkelijk`
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -19,6 +63,8 @@ export default async function handler(req, res) {
       const { hint } = req.body
       const hintLine = hint ? `\n\nGebruik deze instructie als leidraad: "${hint}"` : ''
 
+      const styleGuide = hint ? buildStyleGuide(hint) : ''
+
       requestBody = {
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
@@ -31,13 +77,14 @@ export default async function handler(req, res) {
             },
             {
               type: 'text',
-              text: `Dit is een ruwe schets gemaakt door de gebruiker. Maak er een nette, complete SVG-illustratie van die weergeeft wat in de schets staat getekend.${hintLine}
+              text: `Dit is een ruwe schets gemaakt door de gebruiker. Maak er een complete SVG-illustratie van.${hintLine}
 
-Regels:
+${styleGuide}
+
+Algemene regels:
 - viewBox="0 0 800 400"
-- Gebruik eenvoudige, schone vormen en lijnen
-- Witte achtergrond (#fafaf7)
-- Houd het herkenbaar maar netjes en afgewerkt
+- Achtergrond passend bij de stijl
+- Houd de compositie herkenbaar als de originele schets
 - Geen tekst tenzij duidelijk aanwezig in de schets
 - Geef ALLEEN de SVG-code terug, begin direct met <svg, geen uitleg`,
             },
