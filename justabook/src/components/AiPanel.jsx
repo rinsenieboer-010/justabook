@@ -274,18 +274,6 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
             )}
           </div>
 
-          <div style={{
-            marginTop: 'auto',
-            paddingTop: '16px',
-            borderTop: '1px solid #27272a',
-            fontSize: '11px',
-            color: '#555',
-            fontFamily: 'Georgia, serif',
-            lineHeight: 1.6,
-          }}>
-            AI helpt — jij schrijft.<br />
-            Geen ideeën genereren.
-          </div>
         </div>
       </div>
     </div>
