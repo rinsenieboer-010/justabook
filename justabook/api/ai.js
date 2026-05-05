@@ -48,7 +48,7 @@ async function refineWithFal(base64, hint) {
       image_url: dataUrl,
       prompt,
       strength: 0.92,
-      num_inference_steps: 25,
+      num_inference_steps: 12,
       guidance_scale: 7.5,
       num_images: 1,
     }),
