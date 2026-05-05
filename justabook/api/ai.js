@@ -2,24 +2,24 @@ function buildFalPrompt(hint) {
   if (!hint) return 'artistic illustration, detailed, colorful, high quality painting, no text'
   const h = hint.toLowerCase()
   if (h.includes('van gogh') || h.includes('gogh')) {
-    return 'oil painting in the style of Vincent van Gogh, post-impressionism, swirling expressive brushstrokes, thick impasto paint texture, vivid saturated colors, deep blue sky, yellow fields, orange accents, masterpiece quality, no text, no watermark'
+    return 'masterpiece oil painting by Vincent van Gogh, iconic post-impressionist style, dramatic swirling turbulent sky with thick impasto spirals, bold expressive curved brushstrokes visible in every inch, intensely saturated colors, cobalt blue and ultramarine swirls, chrome yellow sunflowers and wheat fields, burnt orange and vermillion accents, deep prussian blue shadows, the exact texture and technique of Starry Night and Wheat Field with Crows, paint applied with palette knife, three-dimensional texture, museum quality artwork, award winning, no text, no watermark, no signature'
   }
   if (h.includes('monet') || h.includes('impressioni')) {
-    return 'impressionist oil painting in the style of Claude Monet, soft loose brushstrokes, light and atmosphere, dreamy pastel colors, reflections, high quality, no text'
+    return 'masterpiece impressionist oil painting by Claude Monet, iconic French impressionism, dappled light and shimmering water reflections, loose feathery brushstrokes, soft luminous pastel palette of lavender rose and sage green, haystacks water lilies garden at Giverny atmosphere, museum quality, award winning, no text, no watermark'
   }
   if (h.includes('picasso') || h.includes('cubis')) {
-    return 'cubist painting in the style of Pablo Picasso, geometric fragmented shapes, multiple perspectives simultaneously, bold colors, abstract, no text'
+    return 'masterpiece cubist painting by Pablo Picasso, iconic analytical cubism, geometric fragmented shapes from multiple viewpoints simultaneously, bold blacks and ochres, angular planes, revolutionary abstract composition, museum quality, no text, no watermark'
   }
   if (h.includes('rembrandt') || h.includes('baroque')) {
-    return 'baroque oil painting in the style of Rembrandt, dramatic chiaroscuro lighting, dark background, rich warm tones, masterful brushwork, museum quality, no text'
+    return 'masterpiece baroque oil painting by Rembrandt van Rijn, iconic dramatic chiaroscuro, single beam of golden light from darkness, rich jewel-toned shadows, masterful impasto highlights, museum quality old master painting, no text, no watermark'
   }
   if (h.includes('watercolor') || h.includes('aquarel')) {
-    return 'watercolor painting, soft transparent washes, delicate edges, artistic, light and airy, no text'
+    return 'professional watercolor painting, luminous transparent washes layered over each other, wet-on-wet blooms and granulation, delicate bleeding edges, white paper showing through highlights, award winning illustration, no text, no watermark'
   }
   if (h.includes('cartoon') || h.includes('anime')) {
-    return `${hint} style illustration, high quality, clean lines, vibrant colors, no text`
+    return `${hint} style illustration, high quality, clean bold lines, vibrant saturated colors, professional animation quality, no text, no watermark`
   }
-  return `painting in the style of ${hint}, high quality, detailed, artistic, no text, no watermark`
+  return `masterpiece painting in the style of ${hint}, highly detailed, expressive brushwork, vivid colors, museum quality, award winning fine art, no text, no watermark`
 }
 
 function buildSvgStyleGuide(hint) {
@@ -47,9 +47,9 @@ async function refineWithFal(base64, hint) {
     body: JSON.stringify({
       image_url: dataUrl,
       prompt,
-      strength: 0.85,
-      num_inference_steps: 8,
-      guidance_scale: 3.5,
+      strength: 0.92,
+      num_inference_steps: 28,
+      guidance_scale: 7.0,
       num_images: 1,
     }),
   })
