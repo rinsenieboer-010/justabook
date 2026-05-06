@@ -1,5 +1,25 @@
+async function uploadToFalStorage(base64) {
+  const buffer = Buffer.from(base64, 'base64')
+  const uploadRes = await fetch('https://storage.fal.run/', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Key ${process.env.FAL_KEY}`,
+      'Content-Type': 'image/png',
+    },
+    body: buffer,
+  })
+  if (!uploadRes.ok) {
+    const err = await uploadRes.json().catch(() => ({}))
+    throw new Error('Upload mislukt: ' + (err.detail || err.message || `HTTP ${uploadRes.status}`))
+  }
+  const { url } = await uploadRes.json()
+  if (!url) throw new Error('Geen upload URL ontvangen van fal.ai')
+  return url
+}
+
 async function refineWithFal(base64, hint) {
   const prompt = buildFalPrompt(hint)
+  const imageUrl = await uploadToFalStorage(base64)
 
   const falRes = await fetch('https://fal.run/fal-ai/flux/dev/image-to-image', {
     method: 'POST',
@@ -8,7 +28,7 @@ async function refineWithFal(base64, hint) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      image_url: `data:image/png;base64,${base64}`,
+      image_url: imageUrl,
       prompt,
       strength: 0.75,
       num_inference_steps: 28,
@@ -23,12 +43,12 @@ async function refineWithFal(base64, hint) {
   }
 
   const falData = await falRes.json()
-  const imageUrl = falData.images?.[0]?.url
-  if (!imageUrl) throw new Error('Geen afbeelding ontvangen van fal.ai')
+  const resultUrl = falData.images?.[0]?.url
+  if (!resultUrl) throw new Error('Geen afbeelding ontvangen van fal.ai')
 
-  const imgRes = await fetch(imageUrl)
-  const buffer = await imgRes.arrayBuffer()
-  const resultBase64 = Buffer.from(buffer).toString('base64')
+  const imgRes = await fetch(resultUrl)
+  const imgBuffer = await imgRes.arrayBuffer()
+  const resultBase64 = Buffer.from(imgBuffer).toString('base64')
   return `data:image/jpeg;base64,${resultBase64}`
 }
 
