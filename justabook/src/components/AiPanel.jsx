@@ -1,5 +1,19 @@
 import { useState } from 'react'
 
+const svgToDataUrl = (svgString) => new Promise((resolve, reject) => {
+  const canvas = document.createElement('canvas')
+  canvas.width = 800; canvas.height = 400
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#fafaf7'
+  ctx.fillRect(0, 0, 800, 400)
+  const img = new Image()
+  const blob = new Blob([svgString], { type: 'image/svg+xml' })
+  const url = URL.createObjectURL(blob)
+  img.onload = () => { ctx.drawImage(img, 0, 0, 800, 400); URL.revokeObjectURL(url); resolve(canvas.toDataURL('image/png')) }
+  img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG laden mislukt')) }
+  img.src = url
+})
+
 export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, onUpdate }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(null)
@@ -67,7 +81,8 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
-        onUpdateDrawing(selectedDrawing.pageId, selectedDrawing.itemId, data.result)
+        const pngDataUrl = await svgToDataUrl(data.result)
+        onUpdateDrawing(selectedDrawing.pageId, selectedDrawing.itemId, pngDataUrl)
       } else {
         // Text only → generate step-by-step drawing instructions
         const res = await fetch('/api/ai', {

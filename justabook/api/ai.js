@@ -1,87 +1,10 @@
-async function uploadToFalStorage(base64) {
-  const buffer = Buffer.from(base64, 'base64')
-  const uploadRes = await fetch('https://storage.fal.run/', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Key ${process.env.FAL_KEY}`,
-      'Content-Type': 'image/png',
-    },
-    body: buffer,
-  })
-  if (!uploadRes.ok) {
-    const err = await uploadRes.json().catch(() => ({}))
-    throw new Error('Upload mislukt: ' + (err.detail || err.message || `HTTP ${uploadRes.status}`))
-  }
-  const { url } = await uploadRes.json()
-  if (!url) throw new Error('Geen upload URL ontvangen van fal.ai')
-  return url
-}
-
-async function refineWithFal(base64, hint) {
-  const prompt = buildFalPrompt(hint)
-  const imageUrl = await uploadToFalStorage(base64)
-
-  const falRes = await fetch('https://fal.run/fal-ai/flux/dev/image-to-image', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Key ${process.env.FAL_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      image_url: imageUrl,
-      prompt,
-      strength: 0.75,
-      num_inference_steps: 28,
-      guidance_scale: 3.5,
-      num_images: 1,
-    }),
-  })
-
-  if (!falRes.ok) {
-    const err = await falRes.json().catch(() => ({}))
-    throw new Error(err.detail || err.message || `fal.ai HTTP ${falRes.status}`)
-  }
-
-  const falData = await falRes.json()
-  const resultUrl = falData.images?.[0]?.url
-  if (!resultUrl) throw new Error('Geen afbeelding ontvangen van fal.ai')
-
-  const imgRes = await fetch(resultUrl)
-  const imgBuffer = await imgRes.arrayBuffer()
-  const resultBase64 = Buffer.from(imgBuffer).toString('base64')
-  return `data:image/jpeg;base64,${resultBase64}`
-}
-
-function buildFalPrompt(hint) {
-  if (!hint) return 'artistic illustration, detailed, colorful, high quality painting, no text'
-  const h = hint.toLowerCase()
-  if (h.includes('van gogh') || h.includes('gogh')) {
-    return 'masterpiece oil painting by Vincent van Gogh, iconic post-impressionist style, dramatic swirling turbulent sky with thick impasto spirals, bold expressive curved brushstrokes, intensely saturated colors, cobalt blue and ultramarine swirls, chrome yellow fields, burnt orange accents, museum quality artwork, no text, no watermark'
-  }
-  if (h.includes('monet') || h.includes('impressioni')) {
-    return 'masterpiece impressionist oil painting by Claude Monet, dappled light and shimmering water reflections, loose feathery brushstrokes, soft luminous pastel palette, museum quality, no text, no watermark'
-  }
-  if (h.includes('picasso') || h.includes('cubis')) {
-    return 'masterpiece cubist painting by Pablo Picasso, geometric fragmented shapes from multiple viewpoints, bold blacks and ochres, angular planes, museum quality, no text, no watermark'
-  }
-  if (h.includes('rembrandt') || h.includes('baroque')) {
-    return 'masterpiece baroque oil painting by Rembrandt van Rijn, dramatic chiaroscuro, golden light from darkness, rich jewel-toned shadows, museum quality, no text, no watermark'
-  }
-  if (h.includes('watercolor') || h.includes('aquarel')) {
-    return 'professional watercolor painting, luminous transparent washes, delicate bleeding edges, white paper showing through highlights, no text, no watermark'
-  }
-  return `masterpiece painting in the style of ${hint}, highly detailed, expressive brushwork, vivid colors, museum quality, no text, no watermark`
-}
-
-export const config = { maxDuration: 60 }
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { action, content, imageData } = req.body
+  const { action, content, imageData, hint } = req.body
   if (!action) return res.status(400).json({ error: 'action is verplicht' })
 
-  const claudeHeaders = {
+  const headers = {
     'x-api-key': process.env.ANTHROPIC_API_KEY,
     'anthropic-version': '2023-06-01',
     'content-type': 'application/json',
@@ -90,19 +13,34 @@ export default async function handler(req, res) {
   try {
     if (action === 'refine_sketch') {
       if (!imageData) return res.status(400).json({ error: 'imageData ontbreekt' })
-
-      if (!process.env.FAL_KEY) {
-        return res.status(500).json({ error: 'FAL_KEY niet ingesteld in Vercel' })
-      }
-
       const base64 = imageData.includes(',') ? imageData.split(',')[1] : imageData
-      const { hint } = req.body
 
-      const dataUrl = await refineWithFal(base64, hint)
-      return res.json({ result: dataUrl, type: 'image' })
+      const styleGuide = hint ? `\n\nStijl: "${hint}". Wees expressief en visueel aantrekkelijk.` : ''
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4096,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } },
+              {
+                type: 'text',
+                text: `Dit is een schets. Maak er een mooie, gedetailleerde SVG-illustratie van.${styleGuide}\n\nRegels:\n- viewBox="0 0 800 400"\n- Zorg voor een mooie achtergrond\n- Maak het zo gedetailleerd en mooi mogelijk\n- Geef ALLEEN de SVG-code terug, begin direct met <svg`,
+              },
+            ],
+          }],
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error?.message || 'Claude API fout')
+      return res.json({ result: data.content[0].text, type: 'svg' })
     }
 
-    // Tekst-acties
     if (!content) return res.status(400).json({ error: 'content ontbreekt' })
 
     const prompts = {
@@ -116,7 +54,7 @@ export default async function handler(req, res) {
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: claudeHeaders,
+      headers,
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 2048,
@@ -126,7 +64,6 @@ export default async function handler(req, res) {
 
     const data = await response.json()
     if (!response.ok) return res.status(500).json({ error: data.error?.message || 'Claude API fout' })
-
     res.json({ result: data.content[0].text })
   } catch (e) {
     res.status(500).json({ error: e.message })
