@@ -10,9 +10,9 @@ async function refineWithFal(base64, hint) {
     body: JSON.stringify({
       image_url: `data:image/png;base64,${base64}`,
       prompt,
-      strength: 0.85,
+      strength: 0.75,
       num_inference_steps: 28,
-      guidance_scale: 7.5,
+      guidance_scale: 3.5,
       num_images: 1,
     }),
   })
