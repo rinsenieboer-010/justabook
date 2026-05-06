@@ -24,9 +24,12 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
     if (!canvas) return
     canvas.width = canvas.offsetWidth || 600
     canvas.height = height
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
     if (savedData.current) {
       const img = new Image()
-      img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
       img.src = savedData.current
     }
   }, [])
@@ -126,9 +129,12 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
       if (!canvas) return
       const current = savedData.current
       canvas.height = finalH
+      const ctx2 = canvas.getContext('2d')
+      ctx2.fillStyle = '#ffffff'
+      ctx2.fillRect(0, 0, canvas.width, finalH)
       if (current) {
         const img = new Image()
-        img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, finalH)
+        img.onload = () => ctx2.drawImage(img, 0, 0, canvas.width, finalH)
         img.src = current
       }
     }
@@ -156,9 +162,12 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
       const current = savedData.current
       canvas.width = finalW >= containerWidth - 8 ? containerWidth : finalW
       canvas.height = height
+      const ctx3 = canvas.getContext('2d')
+      ctx3.fillStyle = '#ffffff'
+      ctx3.fillRect(0, 0, canvas.width, canvas.height)
       if (current) {
         const img = new Image()
-        img.onload = () => canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        img.onload = () => ctx3.drawImage(img, 0, 0, canvas.width, canvas.height)
         img.src = current
       }
     }
