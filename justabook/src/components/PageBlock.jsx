@@ -163,6 +163,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
             }
 
             if (item.type === 'image') {
+
               return (
                 <div
                   key={item.id}
@@ -214,6 +215,8 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
 
             return null
           })}
+          {/* clearfix: forces container to expand past any floated drawing blocks */}
+          <div style={{ clear: 'both' }} />
         </div>
 
         {/* Legacy whole-page drawing */}
