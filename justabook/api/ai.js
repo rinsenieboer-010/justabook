@@ -118,19 +118,17 @@ export default async function handler(req, res) {
       const base64 = imageData.includes(',') ? imageData.split(',')[1] : imageData
       const { hint } = req.body
 
-      if (process.env.FAL_KEY) {
-        try {
-          const dataUrl = await refineWithFal(base64, hint)
-          return res.json({ result: dataUrl, type: 'image' })
-        } catch (falErr) {
-          console.error('fal.ai mislukt:', falErr.message)
-          return res.status(500).json({ error: 'fal.ai: ' + falErr.message })
-        }
+      if (!process.env.FAL_KEY) {
+        return res.status(500).json({ error: 'FAL_KEY niet gevonden in Vercel environment variables' })
       }
 
-      // Fallback: Claude SVG (alleen als geen FAL_KEY ingesteld)
-      const svgResult = await refineWithClaude(base64, hint, claudeHeaders)
-      return res.json(svgResult)
+      try {
+        const dataUrl = await refineWithFal(base64, hint)
+        return res.json({ result: dataUrl, type: 'image' })
+      } catch (falErr) {
+        console.error('fal.ai mislukt:', falErr.message)
+        return res.status(500).json({ error: 'fal.ai fout: ' + falErr.message })
+      }
     }
 
     // Tekst-acties
