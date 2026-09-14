@@ -337,10 +337,12 @@ export default function App() {
   }
 
   const deletePage = (id) => {
-    updateBookPages(activeBook.id, pages =>
-      pages.length === 1 ? pages : pages.filter(p => p.id !== id)
-    )
-    deletePageDB(id)
+    const currentPages = activeBook?.pages ?? []
+    if (currentPages.length <= 1) return
+    const newPages = currentPages.filter(p => p.id !== id)
+    updateBookPages(activeBook.id, () => newPages)
+    if (activePageId === id) setActivePageId(null)
+    deletePageDB(id).then(() => reorderPagesDB(newPages))
   }
 
   const reorderPages = (newPages) => {
@@ -368,6 +370,7 @@ export default function App() {
         onAddBook={addBook}
         onRenameBook={updateBookTitle}
         onDeleteBook={deleteBook}
+        onDeletePage={deletePage}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(o => !o)}
         userEmail={session.user.email}

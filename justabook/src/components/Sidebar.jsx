@@ -2,9 +2,11 @@ import { useState, useRef, useEffect } from 'react'
 
 export default function Sidebar({
   books, activeBook, pages, activeId,
-  onSelect, onSelectBook, onAddBook, onRenameBook, onDeleteBook,
+  onSelect, onSelectBook, onAddBook, onRenameBook, onDeleteBook, onDeletePage,
   isOpen, onToggle, userEmail, onSignOut,
 }) {
+  const [hoveredPageId, setHoveredPageId]         = useState(null)
+  const [deletePageConfirm, setDeletePageConfirm] = useState(null) // { id, title }
   const [query, setQuery]               = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [showBookMenu, setShowBookMenu] = useState(false)
@@ -379,8 +381,18 @@ export default function Sidebar({
               </div>
             )}
             {filtered.map(page => (
-              <button
+              <div
                 key={page.id}
+                onMouseEnter={() => setHoveredPageId(page.id)}
+                onMouseLeave={() => setHoveredPageId(null)}
+                style={{
+                  position: 'relative',
+                  background: activeId === page.id ? '#d5d0c8' : hoveredPageId === page.id ? '#dedad4' : 'transparent',
+                  borderLeft: activeId === page.id ? '2px solid #1a1a1a' : '2px solid transparent',
+                  transition: 'background 0.15s',
+                }}
+              >
+              <button
                 onClick={() => {
                   onSelect(page.id)
                   document.getElementById(`page-${page.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -389,19 +401,15 @@ export default function Sidebar({
                   display: 'block',
                   width: '100%',
                   textAlign: 'left',
-                  padding: page.type === 'kop2' ? '6px 16px 6px 28px' : '7px 16px',
-                  background: activeId === page.id ? '#d5d0c8' : 'transparent',
+                  padding: page.type === 'kop2' ? '6px 32px 6px 28px' : '7px 32px 7px 16px',
+                  background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   fontFamily: 'Georgia, serif',
                   fontSize: page.type === 'kop2' ? '12px' : '13px',
                   fontWeight: page.type === 'hoofdstuk' ? 'bold' : 'normal',
                   color: '#1a1a1a',
-                  borderLeft: activeId === page.id ? '2px solid #1a1a1a' : '2px solid transparent',
-                  transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => { if (activeId !== page.id) e.currentTarget.style.background = '#dedad4' }}
-                onMouseLeave={e => { if (activeId !== page.id) e.currentTarget.style.background = 'transparent' }}
               >
                 <span style={{
                   display: 'block',
@@ -425,6 +433,19 @@ export default function Sidebar({
                   </span>
                 )}
               </button>
+              {pages.length > 1 && (hoveredPageId === page.id || activeId === page.id) && (
+                <button
+                  onClick={e => { e.stopPropagation(); setDeletePageConfirm({ id: page.id, title: page.title || '(zonder titel)' }) }}
+                  title="Verwijderen"
+                  aria-label={`${page.title || 'Hoofdstuk'} verwijderen`}
+                  style={{ position: 'absolute', right: 6, top: 3, background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '12px', padding: '4px 5px', lineHeight: 1 }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#DC2626'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#999'}
+                >
+                  🗑
+                </button>
+              )}
+              </div>
             ))}
           </nav>
 
@@ -494,6 +515,43 @@ export default function Sidebar({
             </button>
             <button
               onClick={() => { onDeleteBook(deleteConfirm.id); setDeleteConfirm(null) }}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+            >
+              Verwijderen
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Delete page confirmation modal */}
+    {deletePageConfirm && (
+      <div
+        onClick={() => setDeletePageConfirm(null)}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ background: '#f0ede8', borderRadius: 14, width: 360, padding: '28px 28px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.25)', fontFamily: 'Georgia, serif' }}
+        >
+          <div style={{ fontSize: 16, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 10 }}>
+            Hoofdstuk verwijderen
+          </div>
+          <div style={{ fontSize: 13, color: '#555', marginBottom: 6, lineHeight: 1.5 }}>
+            Weet je zeker dat je <strong>"{deletePageConfirm.title}"</strong> wilt verwijderen?
+          </div>
+          <div style={{ fontSize: 12, color: '#DC2626', marginBottom: 24, lineHeight: 1.5 }}>
+            Dit verwijdert de inhoud van dit hoofdstuk permanent. Dit kan niet ongedaan worden gemaakt.
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => setDeletePageConfirm(null)}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #d5d0c8', background: 'none', color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+            >
+              Annuleren
+            </button>
+            <button
+              onClick={() => { onDeletePage(deletePageConfirm.id); setDeletePageConfirm(null) }}
               style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
             >
               Verwijderen
