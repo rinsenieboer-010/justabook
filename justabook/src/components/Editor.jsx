@@ -64,7 +64,7 @@ export default function Editor({ pages, activeId, onSelect, onUpdate, onAdd, onD
             cursor: 'pointer',
             fontSize: '13px',
             color: '#aaa',
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'var(--font-display)',
             width: '100%',
           }}
         >

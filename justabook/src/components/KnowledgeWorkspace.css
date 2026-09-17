@@ -4,7 +4,7 @@
 .knowledge h3 { font-size: 18px; font-weight: 400; margin: 20px 0 12px; }
 .knowledge p { margin: 8px 0 16px; }
 .knowledge-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
-.knowledge-eyebrow, .knowledge small, .knowledge label, .knowledge button, .knowledge-meta { font-family: Arial, sans-serif; }
+.knowledge-eyebrow, .knowledge small, .knowledge label, .knowledge button, .knowledge-meta { font-family: var(--font-sans); }
 .knowledge-eyebrow { color: #60725f; font-size: 10px; letter-spacing: 2px; }
 .knowledge button, .knowledge a { color: #344f3e; }
 .knowledge button { cursor: pointer; background: #faf8f2; border: 1px solid #c9d0c4; border-radius: 7px; padding: 10px 15px; font-size: 13px; text-align: left; }

@@ -128,7 +128,7 @@ function LoginPage() {
   ]
 
   return (
-    <div style={{ minHeight:'100vh', background:'#111827', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', fontFamily:"'DM Sans', sans-serif" }}>
+    <div style={{ minHeight:'100vh', background:'#111827', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-sans)' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');`}</style>
 
       {/* Logo */}
@@ -355,7 +355,7 @@ export default function App() {
   if (session === undefined) return null
   if (!session) return <LoginPage />
   if (loading) return (
-    <div style={{ minHeight:'100vh', background:'#f0ede8', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Georgia, serif', color:'#999', fontSize:14 }}>
+    <div style={{ minHeight:'100vh', background:'#f0ede8', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-display)', color:'#999', fontSize:14 }}>
       Laden...
     </div>
   )

@@ -120,7 +120,7 @@ export default function Sidebar({
                   }}
                 >
                   <span style={{
-                    fontFamily: 'Georgia, serif',
+                    fontFamily: 'var(--font-display)',
                     fontSize: '15px',
                     fontWeight: 'bold',
                     color: '#1a1a1a',
@@ -186,7 +186,7 @@ export default function Sidebar({
                                 border: '1px solid #aaa',
                                 borderRadius: 5,
                                 background: '#fff',
-                                fontFamily: 'Georgia, serif',
+                                fontFamily: 'var(--font-display)',
                                 fontSize: '13px',
                                 outline: 'none',
                               }}
@@ -202,7 +202,7 @@ export default function Sidebar({
                                 border: 'none',
                                 borderRadius: 5,
                                 cursor: 'pointer',
-                                fontFamily: 'Georgia, serif',
+                                fontFamily: 'var(--font-display)',
                                 fontSize: '13px',
                                 fontWeight: activeBook?.id === book.id ? 'bold' : 'normal',
                                 color: '#1a1a1a',
@@ -253,7 +253,7 @@ export default function Sidebar({
                               if (e.key === 'Escape') { setAddingBook(false); setNewBookName('') }
                             }}
                             placeholder="Naam van het boek"
-                            style={{ flex: 1, padding: '5px 8px', border: '1px solid #aaa', borderRadius: 5, background: '#fff', fontFamily: 'Georgia, serif', fontSize: '13px', outline: 'none', minWidth: 0 }}
+                            style={{ flex: 1, padding: '5px 8px', border: '1px solid #aaa', borderRadius: 5, background: '#fff', fontFamily: 'var(--font-display)', fontSize: '13px', outline: 'none', minWidth: 0 }}
                           />
                           <button
                             onClick={commitAddBook}
@@ -265,7 +265,7 @@ export default function Sidebar({
                       ) : (
                         <button
                           onClick={startAddBook}
-                          style={{ width: '100%', textAlign: 'left', padding: '4px 4px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: '13px', color: '#555', borderRadius: 4 }}
+                          style={{ width: '100%', textAlign: 'left', padding: '4px 4px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-display)', fontSize: '13px', color: '#555', borderRadius: 4 }}
                           onMouseEnter={e => e.currentTarget.style.background = '#e0dbd4'}
                           onMouseLeave={e => e.currentTarget.style.background = 'none'}
                         >
@@ -336,7 +336,7 @@ export default function Sidebar({
                   border: '1px solid #d5d0c8',
                   borderRadius: '5px',
                   background: '#f0ede8',
-                  fontFamily: 'Georgia, serif',
+                  fontFamily: 'var(--font-display)',
                   fontSize: '12px',
                   color: '#1a1a1a',
                   outline: 'none',
@@ -374,7 +374,7 @@ export default function Sidebar({
                 padding: '16px',
                 fontSize: '12px',
                 color: '#aaa',
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-display)',
                 textAlign: 'center',
               }}>
                 Niets gevonden
@@ -405,7 +405,7 @@ export default function Sidebar({
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  fontFamily: 'Georgia, serif',
+                  fontFamily: 'var(--font-display)',
                   fontSize: page.type === 'kop2' ? '12px' : '13px',
                   fontWeight: page.type === 'hoofdstuk' ? 'bold' : 'normal',
                   color: '#1a1a1a',
@@ -474,7 +474,7 @@ export default function Sidebar({
             writingMode: 'vertical-rl',
             textOrientation: 'mixed',
             transform: 'rotate(180deg)',
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'var(--font-display)',
             fontSize: '12px',
             fontWeight: 'bold',
             color: '#aaa',
@@ -495,7 +495,7 @@ export default function Sidebar({
       >
         <div
           onClick={e => e.stopPropagation()}
-          style={{ background: '#f0ede8', borderRadius: 14, width: 360, padding: '28px 28px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.25)', fontFamily: 'Georgia, serif' }}
+          style={{ background: '#f0ede8', borderRadius: 14, width: 360, padding: '28px 28px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.25)', fontFamily: 'var(--font-display)' }}
         >
           <div style={{ fontSize: 16, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 10 }}>
             Boek verwijderen
@@ -509,13 +509,13 @@ export default function Sidebar({
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               onClick={() => setDeleteConfirm(null)}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #d5d0c8', background: 'none', color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #d5d0c8', background: 'none', color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)' }}
             >
               Annuleren
             </button>
             <button
               onClick={() => { onDeleteBook(deleteConfirm.id); setDeleteConfirm(null) }}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)' }}
             >
               Verwijderen
             </button>
@@ -532,7 +532,7 @@ export default function Sidebar({
       >
         <div
           onClick={e => e.stopPropagation()}
-          style={{ background: '#f0ede8', borderRadius: 14, width: 360, padding: '28px 28px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.25)', fontFamily: 'Georgia, serif' }}
+          style={{ background: '#f0ede8', borderRadius: 14, width: 360, padding: '28px 28px 24px', boxShadow: '0 12px 40px rgba(0,0,0,0.25)', fontFamily: 'var(--font-display)' }}
         >
           <div style={{ fontSize: 16, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 10 }}>
             Hoofdstuk verwijderen
@@ -546,13 +546,13 @@ export default function Sidebar({
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               onClick={() => setDeletePageConfirm(null)}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #d5d0c8', background: 'none', color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #d5d0c8', background: 'none', color: '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)' }}
             >
               Annuleren
             </button>
             <button
               onClick={() => { onDeletePage(deletePageConfirm.id); setDeletePageConfirm(null) }}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)' }}
             >
               Verwijderen
             </button>
@@ -564,7 +564,7 @@ export default function Sidebar({
     {/* Settings modal */}
     {showSettings && (
       <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div onClick={e => e.stopPropagation()} style={{ background: '#f0ede8', borderRadius: 14, width: 360, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', fontFamily: 'Georgia, serif' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#f0ede8', borderRadius: 14, width: 360, boxShadow: '0 12px 40px rgba(0,0,0,0.2)', fontFamily: 'var(--font-display)' }}>
 
           {/* Header */}
           <div style={{ padding: '22px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -580,7 +580,7 @@ export default function Sidebar({
               <div style={{ fontSize: 13, color: '#555', marginBottom: 10 }}>{userEmail}</div>
               <button
                 onClick={() => { onSignOut(); setShowSettings(false); }}
-                style={{ width: '100%', padding: '9px 0', borderRadius: 8, border: '1px solid #d5d0c8', background: 'none', color: '#DC2626', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+                style={{ width: '100%', padding: '9px 0', borderRadius: 8, border: '1px solid #d5d0c8', background: 'none', color: '#DC2626', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-display)' }}
               >
                 Uitloggen
               </button>

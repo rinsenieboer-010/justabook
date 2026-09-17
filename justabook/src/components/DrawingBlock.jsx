@@ -267,7 +267,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
           ))}
           <div style={{ width: '1px', height: '14px', background: '#e0ddd8' }} />
           <button onClick={() => setIsEraser(v => !v)} style={{
-            padding: '1px 8px', fontSize: '11px', fontFamily: 'Georgia, serif',
+            padding: '1px 8px', fontSize: '11px', fontFamily: 'var(--font-display)',
             border: isEraser ? '1px solid #ccc' : '1px solid transparent',
             borderRadius: '4px', background: isEraser ? '#f0ede8' : 'none',
             cursor: 'pointer', color: '#888',
@@ -284,7 +284,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
         <button
           onClick={(e) => { e.stopPropagation(); onSelectForAI(item) }}
           style={{
-            padding: '2px 10px', fontSize: '11px', fontFamily: 'Georgia, serif',
+            padding: '2px 10px', fontSize: '11px', fontFamily: 'var(--font-display)',
             border: `1px solid ${isSelectedForAI ? '#2563EB' : '#d5d0c8'}`,
             borderRadius: '4px',
             background: isSelectedForAI ? '#DBEAFE' : 'none',
@@ -298,7 +298,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
         <button
           onClick={(e) => { e.stopPropagation(); onRemove(item.id) }}
           style={{
-            padding: '2px 8px', fontSize: '11px', fontFamily: 'Georgia, serif',
+            padding: '2px 8px', fontSize: '11px', fontFamily: 'var(--font-display)',
             border: '1px solid #f0c0c0', borderRadius: '4px',
             background: 'none', color: '#e03030', cursor: 'pointer',
           }}
