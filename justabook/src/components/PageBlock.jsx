@@ -88,7 +88,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         ref={containerRef}
         style={{
           background: '#fff',
-          borderRadius: '8px',
+          borderRadius: '12px',
           border: isActive ? '1px solid #bbb' : '1px solid #dedad4',
           marginBottom: '4px',
           position: 'relative',
@@ -121,7 +121,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           }}
           style={{
             position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
-            width: '32px', height: '4px', borderRadius: '2px', background: '#d5d0c8',
+            width: '32px', height: '4px', borderRadius: '6px', background: '#d5d0c8',
             cursor: 'ns-resize', zIndex: 2,
           }}
         />
@@ -129,7 +129,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         {/* Type label */}
         <div style={{
           position: 'absolute', top: '10px', right: '14px',
-          fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-display)', userSelect: 'none', zIndex: 2,
+          fontSize: '12px', color: '#86868b', fontFamily: 'var(--font-display)', userSelect: 'none', zIndex: 2,
         }}>
           {page.type === 'kop2' ? 'Kop 2' : 'Hoofdstuk'}
         </div>
@@ -143,7 +143,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
             style={{
               display: 'block', width: '100%', border: 'none', outline: 'none',
               fontFamily: 'var(--font-display)', fontSize: page.type === 'kop2' ? '16px' : '20px',
-              fontWeight: 'bold', color: '#1a1a1a', background: 'transparent', marginBottom: '12px', padding: 0,
+              fontWeight: 600, color: '#1d1d1f', background: 'transparent', marginBottom: '12px', padding: 0,
             }}
           />
 
@@ -181,7 +181,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
                   <img
                     src={item.src}
                     draggable={false}
-                    style={{ width: item.width, maxWidth: '100%', display: 'block', borderRadius: '3px', pointerEvents: 'none' }}
+                    style={{ width: item.width, maxWidth: '100%', display: 'block', borderRadius: '8px', pointerEvents: 'none' }}
                     alt=""
                   />
                   {isActive && (
@@ -192,7 +192,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
                         position: 'absolute', top: '4px', right: '4px',
                         background: 'rgba(0,0,0,0.45)', color: '#fff', border: 'none',
                         borderRadius: '50%', width: '18px', height: '18px',
-                        cursor: 'pointer', fontSize: '10px', lineHeight: '18px', padding: 0, textAlign: 'center',
+                        cursor: 'pointer', fontSize: '11px', lineHeight: '18px', padding: 0, textAlign: 'center',
                       }}
                     >✕</button>
                   )}
@@ -223,7 +223,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         {page.drawing && (
           <img
             src={page.drawing}
-            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', borderRadius: '8px' }}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', borderRadius: '12px' }}
             alt=""
           />
         )}
@@ -233,15 +233,15 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
           onMouseDown={startResize}
           style={{
             position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)',
-            width: '32px', height: '4px', borderRadius: '2px', background: '#e8e4de',
+            width: '32px', height: '4px', borderRadius: '6px', background: '#e8e4de',
             zIndex: 1, cursor: 'ns-resize',
           }}
         />
-        <div style={{ position: 'absolute', bottom: '8px', right: '14px', fontSize: '11px', color: '#ccc', fontFamily: 'var(--font-display)', userSelect: 'none', zIndex: 1 }}>
+        <div style={{ position: 'absolute', bottom: '8px', right: '14px', fontSize: '12px', color: '#d1d1d6', fontFamily: 'var(--font-display)', userSelect: 'none', zIndex: 1 }}>
           {page.createdAt}
         </div>
         {isActive && (
-          <button onClick={e => { e.stopPropagation(); onDelete(page.id) }} style={{ position: 'absolute', bottom: '8px', left: '14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#ccc', padding: 0, zIndex: 1 }}>
+          <button onClick={e => { e.stopPropagation(); onDelete(page.id) }} style={{ position: 'absolute', bottom: '8px', left: '14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#d1d1d6', padding: 0, zIndex: 1 }}>
             ✕ verwijder
           </button>
         )}
@@ -283,7 +283,7 @@ function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
       style={{
         display: 'block', width: '100%', border: 'none', outline: 'none',
         resize: 'none', fontFamily: 'var(--font-display)', fontSize: '14px',
-        lineHeight: '1.7', color: '#333', background: 'transparent',
+        lineHeight: '1.7', color: '#424245', background: 'transparent',
         padding: 0, minHeight: '28px', overflow: 'hidden',
       }}
     />
@@ -291,6 +291,6 @@ function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
 }
 
 const addBtnStyle = {
-  background: 'none', border: '1px solid #d5d0c8', borderRadius: '4px',
-  padding: '4px 12px', fontSize: '12px', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-display)',
+  background: 'none', border: '1px solid #d5d0c8', borderRadius: '8px',
+  padding: '4px 12px', fontSize: '12px', cursor: 'pointer', color: '#76767b', fontFamily: 'var(--font-display)',
 }

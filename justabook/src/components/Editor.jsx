@@ -58,12 +58,12 @@ export default function Editor({ pages, activeId, onSelect, onUpdate, onAdd, onD
           onClick={() => onAdd(pages[pages.length - 1]?.id, 'hoofdstuk')}
           style={{
             background: 'none',
-            border: '1px dashed #ccc',
-            borderRadius: '6px',
+            border: '1px dashed #d1d1d6',
+            borderRadius: '10px',
             padding: '10px 24px',
             cursor: 'pointer',
             fontSize: '13px',
-            color: '#aaa',
+            color: '#86868b',
             fontFamily: 'var(--font-display)',
             width: '100%',
           }}

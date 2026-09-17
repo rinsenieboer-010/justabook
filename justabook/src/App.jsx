@@ -128,12 +128,12 @@ function LoginPage() {
   ]
 
   return (
-    <div style={{ minHeight:'100vh', background:'#111827', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-sans)' }}>
+    <div style={{ minHeight:'100vh', background:'#1d1d1f', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-sans)' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');`}</style>
 
       {/* Logo */}
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:40 }}>
-        <span style={{ fontSize:22, fontWeight:700, color:'#f9fafb', letterSpacing:0.5 }}>justabook</span>
+        <span style={{ fontSize:22, fontWeight:600, color:'#f5f5f7', letterSpacing:'-0.01em' }}>justabook</span>
         <div style={{ display:'flex', gap:5 }}>
           <div style={{ width:8, height:8, borderRadius:'50%', background:'#DC2626' }} />
           <div style={{ width:8, height:8, borderRadius:'50%', background:'#E6B400' }} />
@@ -142,8 +142,8 @@ function LoginPage() {
       </div>
 
       {/* Card */}
-      <div style={{ background:'#18181b', borderRadius:16, padding:'36px 40px', width:'100%', maxWidth:400, boxShadow:'0 8px 32px rgba(0,0,0,0.4)' }}>
-        <h2 style={{ color:'#f9fafb', fontSize:20, fontWeight:700, marginBottom:24, textAlign:'center' }}>
+      <div style={{ background:'#1c1c1e', borderRadius:20, padding:'36px 40px', width:'100%', maxWidth:400, boxShadow:'0 8px 32px rgba(0,0,0,0.4)' }}>
+        <h2 style={{ color:'#f5f5f7', fontSize:20, fontWeight:600, marginBottom:24, textAlign:'center' }}>
           {mode === 'login' ? 'Inloggen' : mode === 'signup' ? 'Account aanmaken' : 'Wachtwoord vergeten'}
         </h2>
 
@@ -151,26 +151,26 @@ function LoginPage() {
           <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:24 }}>
             {providers.map(p => (
               <button key={p.id} onClick={() => handleOAuth(p.id)}
-                style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'11px 0', borderRadius:8, border:'1px solid #3f3f46', background:'#27272a', color:'#f9fafb', fontSize:14, fontWeight:500, cursor:'pointer', transition:'background 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background='#3f3f46'}
-                onMouseLeave={e => e.currentTarget.style.background='#27272a'}>
-                <span style={{ fontWeight:700, fontSize:15 }}>{p.icon}</span> Doorgaan met {p.label}
+                style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'11px 0', borderRadius:12, border:'1px solid #3a3a3c', background:'#2c2c2e', color:'#f5f5f7', fontSize:14, fontWeight:500, cursor:'pointer', transition:'background 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.background='#3a3a3c'}
+                onMouseLeave={e => e.currentTarget.style.background='#2c2c2e'}>
+                <span style={{ fontWeight:600, fontSize:15 }}>{p.icon}</span> Doorgaan met {p.label}
               </button>
             ))}
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:24 }}>
-            <div style={{ flex:1, height:1, background:'#3f3f46' }} />
-            <span style={{ color:'#71717a', fontSize:12 }}>of</span>
-            <div style={{ flex:1, height:1, background:'#3f3f46' }} />
+            <div style={{ flex:1, height:1, background:'#3a3a3c' }} />
+            <span style={{ color:'#8e8e93', fontSize:12 }}>of</span>
+            <div style={{ flex:1, height:1, background:'#3a3a3c' }} />
           </div>
         </>}
 
         <form onSubmit={handleEmail} style={{ display:'flex', flexDirection:'column', gap:12 }}>
           <input type="email" placeholder="E-mailadres" value={email} onChange={e => setEmail(e.target.value)} required
-            style={{ padding:'10px 14px', borderRadius:8, border:'1px solid #3f3f46', background:'#27272a', color:'#f9fafb', fontSize:14, outline:'none' }} />
+            style={{ padding:'10px 14px', borderRadius:12, border:'1px solid #3a3a3c', background:'#2c2c2e', color:'#f5f5f7', fontSize:14, outline:'none' }} />
           {mode !== 'forgot' && (
             <input type="password" placeholder="Wachtwoord (min. 6 tekens)" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-              style={{ padding:'10px 14px', borderRadius:8, border:'1px solid #3f3f46', background:'#27272a', color:'#f9fafb', fontSize:14, outline:'none' }} />
+              style={{ padding:'10px 14px', borderRadius:12, border:'1px solid #3a3a3c', background:'#2c2c2e', color:'#f5f5f7', fontSize:14, outline:'none' }} />
           )}
           {mode === 'login' && (
             <div style={{ textAlign:'right', marginTop:-4 }}>
@@ -183,13 +183,13 @@ function LoginPage() {
           {success && <div style={{ color:'#86efac', fontSize:13 }}>{success}</div>}
           {!success && (
             <button type="submit" disabled={loading}
-              style={{ padding:'11px 0', borderRadius:8, border:'none', background:'#2563EB', color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer', opacity: loading ? 0.7 : 1, transition:'opacity 0.15s' }}>
+              style={{ padding:'11px 0', borderRadius:12, border:'none', background:'#2563EB', color:'#fff', fontSize:14, fontWeight:600, cursor:'pointer', opacity: loading ? 0.7 : 1, transition:'opacity 0.15s' }}>
               {loading ? 'Laden...' : mode === 'login' ? 'Inloggen' : mode === 'signup' ? 'Account aanmaken' : 'Resetlink sturen'}
             </button>
           )}
         </form>
 
-        <div style={{ textAlign:'center', marginTop:20, fontSize:13, color:'#71717a' }}>
+        <div style={{ textAlign:'center', marginTop:20, fontSize:13, color:'#8e8e93' }}>
           {mode === 'forgot' ? (
             <span onClick={() => switchMode('login')} style={{ color:'#60a5fa', cursor:'pointer', fontWeight:500 }}>Terug naar inloggen</span>
           ) : mode === 'login' ? <>
@@ -355,7 +355,7 @@ export default function App() {
   if (session === undefined) return null
   if (!session) return <LoginPage />
   if (loading) return (
-    <div style={{ minHeight:'100vh', background:'#f0ede8', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-display)', color:'#999', fontSize:14 }}>
+    <div style={{ minHeight:'100vh', background:'#f0ede8', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-display)', color:'#76767b', fontSize:14 }}>
       Laden...
     </div>
   )

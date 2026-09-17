@@ -86,3 +86,41 @@ code, kbd, pre, samp {
     scroll-behavior: auto !important;
   }
 }
+
+/* Apple-achtige scrollbalken overal (zie src/scrollThumbs.js): native verticale balk verbergen */
+::-webkit-scrollbar {
+  width: 0;
+  height: 8px;
+  background: transparent;
+}
+::-webkit-scrollbar:vertical,
+*::-webkit-scrollbar:vertical {
+  width: 0 !important;
+}
+*::-webkit-scrollbar:horizontal {
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb:horizontal {
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 4px;
+}
+.jmp-thumb {
+  position: fixed;
+  width: 7px;
+  border-radius: 3.5px;
+  background: rgba(0, 0, 0, 0.22);
+  z-index: 2147483000;
+  touch-action: none;
+  transition: background-color var(--duration-fast) var(--ease-apple), opacity var(--duration) var(--ease-apple);
+}
+.jmp-thumb.on-dark {
+  background: rgba(255, 255, 255, 0.28);
+}
+.jmp-thumb:hover,
+.jmp-thumb.dragging {
+  background: rgba(0, 0, 0, 0.38);
+}
+.jmp-thumb.on-dark:hover,
+.jmp-thumb.on-dark.dragging {
+  background: rgba(255, 255, 255, 0.45);
+}

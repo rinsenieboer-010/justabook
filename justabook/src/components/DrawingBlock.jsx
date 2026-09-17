@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react'
 
-const COLORS = ['#1a1a1a', '#555', '#e03030', '#2060d0', '#e8a020', '#20a050']
+const COLORS = ['#1d1d1f', '#6e6e73', '#e03030', '#2060d0', '#e8a020', '#20a050']
 const PEN_SIZES = [2, 4, 8]
 
 export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, isSelectedForAI }) {
@@ -10,7 +10,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
   const lastPos = useRef(null)
   const strokeHistory = useRef([])
   const savedData = useRef(item.data || null)
-  const [penColor, setPenColor] = useState('#1a1a1a')
+  const [penColor, setPenColor] = useState('#1d1d1f')
   const [penSize, setPenSize] = useState(2)
   const [isEraser, setIsEraser] = useState(false)
   const [showTools, setShowTools] = useState(false)
@@ -192,7 +192,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
       {/* Canvas area */}
       <div style={{
         position: 'relative',
-        borderRadius: '6px',
+        borderRadius: '10px',
         border: isSelectedForAI ? '2px solid #2563EB' : '1px solid #e8e4de',
         background: '#fafaf7',
         overflow: 'hidden',
@@ -226,7 +226,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
             background: 'linear-gradient(transparent, rgba(0,0,0,0.03))',
           }}
         >
-          <div style={{ width: '32px', height: '4px', borderRadius: '2px', background: '#d5d0c8' }} />
+          <div style={{ width: '32px', height: '4px', borderRadius: '6px', background: '#d5d0c8' }} />
         </div>
 
         {/* Right resize handle */}
@@ -239,7 +239,7 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
             background: 'linear-gradient(to left, rgba(0,0,0,0.03), transparent)',
           }}
         >
-          <div style={{ width: '4px', height: '32px', borderRadius: '2px', background: '#d5d0c8' }} />
+          <div style={{ width: '4px', height: '32px', borderRadius: '6px', background: '#d5d0c8' }} />
         </div>
       </div>
 
@@ -258,23 +258,23 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
           {PEN_SIZES.map(s => (
             <button key={s} onClick={() => { setPenSize(s); setIsEraser(false) }} style={{
               width: '18px', height: '18px', borderRadius: '50%', padding: 0, flexShrink: 0,
-              background: !isEraser && penSize === s ? '#1a1a1a' : 'transparent',
-              border: '1px solid #ccc', cursor: 'pointer',
+              background: !isEraser && penSize === s ? '#1d1d1f' : 'transparent',
+              border: '1px solid #d1d1d6', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <div style={{ width: `${s + 2}px`, height: `${s + 2}px`, borderRadius: '50%', background: !isEraser && penSize === s ? '#fff' : '#1a1a1a' }} />
+              <div style={{ width: `${s + 2}px`, height: `${s + 2}px`, borderRadius: '50%', background: !isEraser && penSize === s ? '#fff' : '#1d1d1f' }} />
             </button>
           ))}
           <div style={{ width: '1px', height: '14px', background: '#e0ddd8' }} />
           <button onClick={() => setIsEraser(v => !v)} style={{
-            padding: '1px 8px', fontSize: '11px', fontFamily: 'var(--font-display)',
-            border: isEraser ? '1px solid #ccc' : '1px solid transparent',
-            borderRadius: '4px', background: isEraser ? '#f0ede8' : 'none',
-            cursor: 'pointer', color: '#888',
+            padding: '1px 8px', fontSize: '12px', fontFamily: 'var(--font-display)',
+            border: isEraser ? '1px solid #d1d1d6' : '1px solid transparent',
+            borderRadius: '8px', background: isEraser ? '#f0ede8' : 'none',
+            cursor: 'pointer', color: '#76767b',
           }}>gum</button>
           <button onClick={undo} style={{
             padding: '1px 8px', fontSize: '13px', border: '1px solid transparent',
-            borderRadius: '4px', background: 'none', cursor: 'pointer', color: '#888',
+            borderRadius: '8px', background: 'none', cursor: 'pointer', color: '#76767b',
           }}>↩</button>
         </div>
       )}
@@ -284,11 +284,11 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
         <button
           onClick={(e) => { e.stopPropagation(); onSelectForAI(item) }}
           style={{
-            padding: '2px 10px', fontSize: '11px', fontFamily: 'var(--font-display)',
+            padding: '2px 10px', fontSize: '12px', fontFamily: 'var(--font-display)',
             border: `1px solid ${isSelectedForAI ? '#2563EB' : '#d5d0c8'}`,
-            borderRadius: '4px',
+            borderRadius: '8px',
             background: isSelectedForAI ? '#DBEAFE' : 'none',
-            color: isSelectedForAI ? '#2563EB' : '#aaa',
+            color: isSelectedForAI ? '#2563EB' : '#86868b',
             cursor: 'pointer',
           }}
         >
@@ -298,8 +298,8 @@ export default function DrawingBlock({ item, onUpdate, onRemove, onSelectForAI, 
         <button
           onClick={(e) => { e.stopPropagation(); onRemove(item.id) }}
           style={{
-            padding: '2px 8px', fontSize: '11px', fontFamily: 'var(--font-display)',
-            border: '1px solid #f0c0c0', borderRadius: '4px',
+            padding: '2px 8px', fontSize: '12px', fontFamily: 'var(--font-display)',
+            border: '1px solid #f0c0c0', borderRadius: '8px',
             background: 'none', color: '#e03030', cursor: 'pointer',
           }}
         >✕</button>

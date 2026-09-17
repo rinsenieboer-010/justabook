@@ -120,7 +120,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
           marginTop: '72px',
           width: '28px',
           padding: '12px 0 14px',
-          background: '#1a1a1a',
+          background: '#1d1d1f',
           border: 'none',
           borderRadius: '6px 0 0 6px',
           cursor: 'pointer',
@@ -135,7 +135,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
           writingMode: 'vertical-rl',
           textOrientation: 'mixed',
           transform: 'rotate(180deg)',
-          fontSize: '11px',
+          fontSize: '12px',
           fontWeight: 600,
           letterSpacing: '0.08em',
           color: '#f0ede8',
@@ -150,7 +150,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
         width: open ? '220px' : '0px',
         overflow: 'hidden',
         transition: 'width 0.25s ease',
-        background: '#18181b',
+        background: '#1c1c1e',
         height: '100vh',
         flexShrink: 0,
       }}>
@@ -164,12 +164,12 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
           boxSizing: 'border-box',
           overflowY: 'auto',
         }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#f0ede8', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#f0ede8', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
             AI-opties
           </div>
 
           {error && (
-            <div style={{ fontSize: '11px', color: '#f87171', fontFamily: 'var(--font-display)', padding: '8px 10px', background: '#2d1a1a', borderRadius: '6px' }}>
+            <div style={{ fontSize: '12px', color: '#f87171', fontFamily: 'var(--font-display)', padding: '8px 10px', background: '#2d1a1a', borderRadius: '10px' }}>
               {error}
             </div>
           )}
@@ -191,8 +191,8 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
           />
 
           {/* Tekenhulp */}
-          <div style={{ marginTop: '4px', borderTop: '1px solid #27272a', paddingTop: '12px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#aaa', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
+          <div style={{ marginTop: '4px', borderTop: '1px solid #2c2c2e', paddingTop: '12px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#86868b', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
               Tekenhulp
             </div>
 
@@ -202,14 +202,14 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
                 <img
                   src={selectedDrawing.dataUrl}
                   alt="Geselecteerde schets"
-                  style={{ width: '100%', borderRadius: '6px', border: '2px solid #2563EB', display: 'block', objectFit: 'contain', maxHeight: '90px', background: '#fafaf7' }}
+                  style={{ width: '100%', borderRadius: '10px', border: '2px solid #2563EB', display: 'block', objectFit: 'contain', maxHeight: '90px', background: '#fafaf7' }}
                 />
-                <div style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-display)', marginTop: '3px' }}>
+                <div style={{ fontSize: '11px', color: '#6e6e73', fontFamily: 'var(--font-display)', marginTop: '3px' }}>
                   Schets geselecteerd
                 </div>
               </div>
             ) : (
-              <div style={{ fontSize: '11px', color: '#555', fontFamily: 'var(--font-display)', marginBottom: '8px', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '12px', color: '#6e6e73', fontFamily: 'var(--font-display)', marginBottom: '8px', lineHeight: 1.5 }}>
                 Selecteer een tekening via "Selecteer voor AI", of typ een beschrijving hieronder.
               </div>
             )}
@@ -224,8 +224,8 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
               rows={3}
               style={{
                 width: '100%', boxSizing: 'border-box',
-                background: '#27272a', border: '1px solid #3f3f46',
-                borderRadius: '6px', color: '#f0ede8',
+                background: '#2c2c2e', border: '1px solid #3a3a3c',
+                borderRadius: '10px', color: '#f0ede8',
                 fontFamily: 'var(--font-display)', fontSize: '12px',
                 padding: '8px 10px', resize: 'none', outline: 'none',
                 lineHeight: 1.5,
@@ -240,14 +240,14 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
                 marginTop: '6px',
                 width: '100%',
                 padding: '8px 0',
-                background: loading === 'tekenhulp' ? '#27272a' : hasSketch ? '#2563EB' : '#E6B400',
+                background: loading === 'tekenhulp' ? '#2c2c2e' : hasSketch ? '#2563EB' : '#E6B400',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '10px',
                 cursor: (loading || (!hasSketch && !hasText)) ? 'not-allowed' : 'pointer',
                 fontFamily: 'var(--font-display)',
                 fontSize: '12px',
                 fontWeight: 600,
-                color: hasSketch ? '#fff' : '#1a1a1a',
+                color: hasSketch ? '#fff' : '#1d1d1f',
                 opacity: (!hasSketch && !hasText) ? 0.4 : 1,
                 transition: 'opacity 0.15s, background 0.15s',
               }}
@@ -260,9 +260,9 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
               <div style={{
                 marginTop: '8px',
                 padding: '10px',
-                background: '#27272a',
-                borderRadius: '6px',
-                fontSize: '11px',
+                background: '#2c2c2e',
+                borderRadius: '10px',
+                fontSize: '12px',
                 color: '#d4d0c8',
                 fontFamily: 'var(--font-display)',
                 lineHeight: 1.6,
@@ -287,21 +287,21 @@ function ActionBtn({ label, description, loading, disabled, onClick }) {
       style={{
         width: '100%',
         padding: '10px 12px',
-        background: '#27272a',
-        border: '1px solid #3f3f46',
-        borderRadius: '8px',
+        background: '#2c2c2e',
+        border: '1px solid #3a3a3c',
+        borderRadius: '12px',
         cursor: disabled ? 'not-allowed' : 'pointer',
         textAlign: 'left',
         transition: 'background 0.15s',
         opacity: disabled && !loading ? 0.5 : 1,
       }}
-      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = '#3f3f46' }}
-      onMouseLeave={e => { e.currentTarget.style.background = '#27272a' }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = '#3a3a3c' }}
+      onMouseLeave={e => { e.currentTarget.style.background = '#2c2c2e' }}
     >
       <div style={{ fontSize: '12px', fontWeight: 600, color: loading ? '#E6B400' : '#f0ede8', fontFamily: 'var(--font-display)', marginBottom: '3px' }}>
         {loading ? 'Bezig...' : label}
       </div>
-      <div style={{ fontSize: '11px', color: '#666', fontFamily: 'var(--font-display)', lineHeight: 1.4 }}>
+      <div style={{ fontSize: '12px', color: '#6e6e73', fontFamily: 'var(--font-display)', lineHeight: 1.4 }}>
         {description}
       </div>
     </button>
