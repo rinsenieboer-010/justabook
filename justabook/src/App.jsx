@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
 import AiPanel from './components/AiPanel'
+import KnowledgeWorkspace from './components/KnowledgeWorkspace'
 import { supabase } from './supabase'
 import {
   loadBooks as loadBooksDB,
@@ -206,6 +207,7 @@ function LoginPage() {
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
+  const [knowledgeOpen, setKnowledgeOpen] = useState(false)
   const [session, setSession]           = useState(undefined)
   const [books, setBooks]               = useState([])
   const [activeBookId, setActiveBookId] = useState(null)
@@ -359,6 +361,9 @@ export default function App() {
   )
 
   return (
+    <>
+    {knowledgeOpen && <KnowledgeWorkspace key={session.user.id} userId={session.user.id} books={books} onClose={() => setKnowledgeOpen(false)} />}
+    <div style={knowledgeOpen ? { display: 'none' } : { display: 'contents' }}>
     <div className="app">
       <Sidebar
         books={books}
@@ -404,6 +409,9 @@ export default function App() {
         }}
         onUpdate={updatePage}
       />
+      <button className="knowledge-entry" onClick={() => setKnowledgeOpen(true)}>Mijn kennis ↗</button>
     </div>
+    </div>
+    </>
   )
 }
