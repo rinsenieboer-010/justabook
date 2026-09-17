@@ -120,7 +120,7 @@ export default function KnowledgeWorkspace({ userId, books, onClose }) {
 
   return <main className="knowledge">
     <header className="knowledge-header">
-      <div><span className="knowledge-eyebrow">JUSTABOOK / PERSOONLIJKE KENNIS</span><h1>Wat ik wil onthouden.</h1><p>Verzamelen, in eigen woorden begrijpen en weer terughalen.</p></div>
+      <div><span className="knowledge-eyebrow">justabook / Persoonlijke kennis</span><h1>Wat ik wil onthouden.</h1><p>Verzamelen, in eigen woorden begrijpen en weer terughalen.</p></div>
       <button disabled={busy} onClick={() => { if (discard(sourceDirty || lessonDirty)) onClose() }}>Terug naar mijn boek</button>
     </header>
     <nav className="knowledge-tabs" aria-label="Kennisbank">
@@ -160,7 +160,7 @@ export default function KnowledgeWorkspace({ userId, books, onClose }) {
             setLesson({ ...blankLesson(), title: p.title, content: text, location: `${b.title} / ${p.title}`.slice(0,250) }); setLessonDirty(true)
           }}>{p.title}</button>)}</div>)}</details>
         </aside>
-        <section className="knowledge-card"><span className="knowledge-eyebrow">{lesson.status === 'approved' ? 'MIJN KENNIS' : 'CONCEPT / NOG NIET MIJN KENNIS'}</span><h2>In mijn eigen woorden</h2>
+        <section className="knowledge-card"><span className="knowledge-eyebrow">{lesson.status === 'approved' ? 'Mijn kennis' : 'Concept / nog niet mijn kennis'}</span><h2>In mijn eigen woorden</h2>
           <label>Titel<input value={lesson.title} maxLength={250} onChange={e => updateLesson({ title: e.target.value })} /></label>
           <label>Wat heb ik geleerd?<textarea aria-label="Wat heb ik geleerd?" rows={9} value={lesson.content} maxLength={12000} onChange={e => updateLesson({ content: e.target.value })} placeholder="Wat betekent dit voor mij? Wanneer heb ik dit zelf meegemaakt?" /></label>
           <label>Mijn korte herinnering<textarea aria-label="Mijn korte herinnering" rows={3} value={lesson.quote} maxLength={1200} onChange={e => updateLesson({ quote: e.target.value })} placeholder="Schrijf de zin die je later aan jezelf wilt teruggeven." /></label>
@@ -188,14 +188,14 @@ export default function KnowledgeWorkspace({ userId, books, onClose }) {
         </section>
       </div>}
       {tab === 'recall' && <div className="knowledge-recall">
-        <section className="knowledge-quote"><span className="knowledge-eyebrow">EEN HERINNERING AAN MEZELF</span>{quote ? <><blockquote>“{quote.quote}”</blockquote><button onClick={() => chooseLesson(quote)}>{quote.title} ↗</button></> : <p>{data.preferences?.interval_days === 0 ? 'Je herinneringen staan uit.' : 'Geef een goedgekeurde les een korte herinnering. Die komt hier terug.'}</p>}
+        <section className="knowledge-quote"><span className="knowledge-eyebrow">Een herinnering aan mezelf</span>{quote ? <><blockquote>“{quote.quote}”</blockquote><button onClick={() => chooseLesson(quote)}>{quote.title} ↗</button></> : <p>{data.preferences?.interval_days === 0 ? 'Je herinneringen staan uit.' : 'Geef een goedgekeurde les een korte herinnering. Die komt hier terug.'}</p>}
           <label>Hoe vaak een andere herinnering?<select value={data.preferences?.interval_days ?? 7} onChange={e => { const interval = Number(e.target.value); run(async () => {
             const preferences = await saveKnowledge('jab_knowledge_preferences', { interval_days: interval, anchor_date: day }, userId)
             setData(d => ({ ...d, preferences })); setNotice('Voorkeur opgeslagen.')
           }) }}><option value={0}>Uit</option><option value={1}>Dagelijks</option><option value={2}>Om de twee dagen</option><option value={3}>Om de drie dagen</option><option value={7}>Wekelijks</option></select></label>
           <p className="knowledge-meta">Deze herinnering verschijnt hier in je boek. Meldingen en de koppeling met Just My Plan zijn nog niet actief.</p>
         </section>
-        <section className="knowledge-card"><span className="knowledge-eyebrow">ALLEEN UIT MIJN EIGEN KENNIS</span><h2>Wat heb ik hier al over geleerd?</h2><p>Beschrijf een vraag of situatie. Je krijgt letterlijke passages uit je goedgekeurde lessen, met de les erbij. Als er niets aansluit, zegt de assistent dat.</p>
+        <section className="knowledge-card"><span className="knowledge-eyebrow">Alleen uit mijn eigen kennis</span><h2>Wat heb ik hier al over geleerd?</h2><p>Beschrijf een vraag of situatie. Je krijgt letterlijke passages uit je goedgekeurde lessen, met de les erbij. Als er niets aansluit, zegt de assistent dat.</p>
           <form onSubmit={e => { e.preventDefault(); setAnswer(null); run(async () => setAnswer(await knowledgeAction({ action: 'ask', question }))) }}><label>Mijn vraag of situatie<textarea aria-label="Mijn vraag of situatie" rows={4} value={question} maxLength={2000} onChange={e => setQuestion(e.target.value)} placeholder="Ik stel een lastig gesprek uit. Welke eigen les kan me helpen?" /></label><button className="knowledge-primary" disabled={!question.trim()}>Zoek in mijn kennis</button></form>
           <details><summary>Een les bij mijn komende week</summary><p>Als de koppeling is ingesteld, worden alleen de titels van afspraken en taken met een datum in de komende zeven dagen gebruikt. Deze worden voor het zoeken naar passende lessen naar de kennisassistent gestuurd.</p><button onClick={() => { setAnswer(null); run(async () => setAnswer(await knowledgeAction({ action: 'ask_plan' }))) }}>Zoek bij mijn week in Just My Plan</button></details>
           {answer && <div className="knowledge-answer" aria-live="polite"><p>{answer.message}</p>{answer.context?.length > 0 && <details><summary>Gebruikte afspraken en taken</summary><ul>{answer.context.map((c,i) => <li key={i}>{c.date}: {c.title}</li>)}</ul></details>}{answer.matches.map(m => <article key={m.id}><blockquote>{m.excerpt}</blockquote><button onClick={() => chooseLesson(lessons.find(l => l.id === m.id))}>{m.title} ↗</button>{m.location && <small>{m.location}</small>}</article>)}</div>}
