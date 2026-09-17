@@ -139,7 +139,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
           fontWeight: 600,
           letterSpacing: '0.08em',
           color: '#f0ede8',
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'var(--font-display)',
           userSelect: 'none',
         }}>AI</span>
       </button>
@@ -164,12 +164,12 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
           boxSizing: 'border-box',
           overflowY: 'auto',
         }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#f0ede8', fontFamily: 'Georgia, serif', marginBottom: '4px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#f0ede8', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
             AI-opties
           </div>
 
           {error && (
-            <div style={{ fontSize: '11px', color: '#f87171', fontFamily: 'Georgia, serif', padding: '8px 10px', background: '#2d1a1a', borderRadius: '6px' }}>
+            <div style={{ fontSize: '11px', color: '#f87171', fontFamily: 'var(--font-display)', padding: '8px 10px', background: '#2d1a1a', borderRadius: '6px' }}>
               {error}
             </div>
           )}
@@ -192,7 +192,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
 
           {/* Tekenhulp */}
           <div style={{ marginTop: '4px', borderTop: '1px solid #27272a', paddingTop: '12px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#aaa', fontFamily: 'Georgia, serif', marginBottom: '8px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#aaa', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
               Tekenhulp
             </div>
 
@@ -204,12 +204,12 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
                   alt="Geselecteerde schets"
                   style={{ width: '100%', borderRadius: '6px', border: '2px solid #2563EB', display: 'block', objectFit: 'contain', maxHeight: '90px', background: '#fafaf7' }}
                 />
-                <div style={{ fontSize: '10px', color: '#555', fontFamily: 'Georgia, serif', marginTop: '3px' }}>
+                <div style={{ fontSize: '10px', color: '#555', fontFamily: 'var(--font-display)', marginTop: '3px' }}>
                   Schets geselecteerd
                 </div>
               </div>
             ) : (
-              <div style={{ fontSize: '11px', color: '#555', fontFamily: 'Georgia, serif', marginBottom: '8px', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '11px', color: '#555', fontFamily: 'var(--font-display)', marginBottom: '8px', lineHeight: 1.5 }}>
                 Selecteer een tekening via "Selecteer voor AI", of typ een beschrijving hieronder.
               </div>
             )}
@@ -226,7 +226,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
                 width: '100%', boxSizing: 'border-box',
                 background: '#27272a', border: '1px solid #3f3f46',
                 borderRadius: '6px', color: '#f0ede8',
-                fontFamily: 'Georgia, serif', fontSize: '12px',
+                fontFamily: 'var(--font-display)', fontSize: '12px',
                 padding: '8px 10px', resize: 'none', outline: 'none',
                 lineHeight: 1.5,
               }}
@@ -244,7 +244,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
                 border: 'none',
                 borderRadius: '6px',
                 cursor: (loading || (!hasSketch && !hasText)) ? 'not-allowed' : 'pointer',
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-display)',
                 fontSize: '12px',
                 fontWeight: 600,
                 color: hasSketch ? '#fff' : '#1a1a1a',
@@ -264,7 +264,7 @@ export default function AiPanel({ activePage, selectedDrawing, onUpdateDrawing, 
                 borderRadius: '6px',
                 fontSize: '11px',
                 color: '#d4d0c8',
-                fontFamily: 'Georgia, serif',
+                fontFamily: 'var(--font-display)',
                 lineHeight: 1.6,
                 whiteSpace: 'pre-wrap',
               }}>
@@ -298,10 +298,10 @@ function ActionBtn({ label, description, loading, disabled, onClick }) {
       onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = '#3f3f46' }}
       onMouseLeave={e => { e.currentTarget.style.background = '#27272a' }}
     >
-      <div style={{ fontSize: '12px', fontWeight: 600, color: loading ? '#E6B400' : '#f0ede8', fontFamily: 'Georgia, serif', marginBottom: '3px' }}>
+      <div style={{ fontSize: '12px', fontWeight: 600, color: loading ? '#E6B400' : '#f0ede8', fontFamily: 'var(--font-display)', marginBottom: '3px' }}>
         {loading ? 'Bezig...' : label}
       </div>
-      <div style={{ fontSize: '11px', color: '#666', fontFamily: 'Georgia, serif', lineHeight: 1.4 }}>
+      <div style={{ fontSize: '11px', color: '#666', fontFamily: 'var(--font-display)', lineHeight: 1.4 }}>
         {description}
       </div>
     </button>

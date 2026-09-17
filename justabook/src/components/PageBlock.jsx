@@ -129,7 +129,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
         {/* Type label */}
         <div style={{
           position: 'absolute', top: '10px', right: '14px',
-          fontSize: '11px', color: '#aaa', fontFamily: 'Georgia, serif', userSelect: 'none', zIndex: 2,
+          fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-display)', userSelect: 'none', zIndex: 2,
         }}>
           {page.type === 'kop2' ? 'Kop 2' : 'Hoofdstuk'}
         </div>
@@ -142,7 +142,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
             placeholder={page.type === 'kop2' ? 'Kop 2' : 'Hoofdstuk'}
             style={{
               display: 'block', width: '100%', border: 'none', outline: 'none',
-              fontFamily: 'Georgia, serif', fontSize: page.type === 'kop2' ? '16px' : '20px',
+              fontFamily: 'var(--font-display)', fontSize: page.type === 'kop2' ? '16px' : '20px',
               fontWeight: 'bold', color: '#1a1a1a', background: 'transparent', marginBottom: '12px', padding: 0,
             }}
           />
@@ -237,7 +237,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
             zIndex: 1, cursor: 'ns-resize',
           }}
         />
-        <div style={{ position: 'absolute', bottom: '8px', right: '14px', fontSize: '11px', color: '#ccc', fontFamily: 'Georgia, serif', userSelect: 'none', zIndex: 1 }}>
+        <div style={{ position: 'absolute', bottom: '8px', right: '14px', fontSize: '11px', color: '#ccc', fontFamily: 'var(--font-display)', userSelect: 'none', zIndex: 1 }}>
           {page.createdAt}
         </div>
         {isActive && (
@@ -282,7 +282,7 @@ function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
       rows={1}
       style={{
         display: 'block', width: '100%', border: 'none', outline: 'none',
-        resize: 'none', fontFamily: 'Georgia, serif', fontSize: '14px',
+        resize: 'none', fontFamily: 'var(--font-display)', fontSize: '14px',
         lineHeight: '1.7', color: '#333', background: 'transparent',
         padding: 0, minHeight: '28px', overflow: 'hidden',
       }}
@@ -292,5 +292,5 @@ function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
 
 const addBtnStyle = {
   background: 'none', border: '1px solid #d5d0c8', borderRadius: '4px',
-  padding: '4px 12px', fontSize: '12px', cursor: 'pointer', color: '#888', fontFamily: 'Georgia, serif',
+  padding: '4px 12px', fontSize: '12px', cursor: 'pointer', color: '#888', fontFamily: 'var(--font-display)',
 }
