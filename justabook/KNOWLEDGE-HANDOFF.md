@@ -1,6 +1,6 @@
 # Persoonlijke kennis in JustaBook
 
-Gebouwd op `3acf668` in branch `codex/personal-knowledge`. Werkmap: `C:/Users/RJNie/OneDrive/Documenten/Website/justabook-knowledge/justabook`. Niet gecommit, gemerged of gedeployd. De oorspronkelijke werkmap bevat eigen wijzigingen aan package.json/package-lock.json; die zijn niet overgenomen of aangepast. Claude kan deze geïsoleerde diff reviewen en daarna integreren.
+Gebouwd op `3acf668` in branch `codex/personal-knowledge`. Werkmap: `C:/Users/RJNie/OneDrive/Documenten/Website/justabook-knowledge/justabook`. Update: gepubliceerd op uitdrukkelijk verzoek van Rinse; commit 76b6db0 staat op main en is succesvol door Vercel gedeployd. De oorspronkelijke werkmap bevat eigen wijzigingen aan package.json/package-lock.json; die zijn niet overgenomen of aangepast. Claude kan deze geïsoleerde diff reviewen en daarna integreren.
 
 ## Gedrag
 
@@ -51,3 +51,7 @@ Let bij review op gelijktijdige bewerkingen: formulieren schrijven per rij, zond
 Supabase is ingericht via de browserlogin van Rinse; de oude lokale beheertoken blijft ongeldig en is niet aangepast. SUPADATA_API_KEY is na expliciete toestemming opgeslagen als Secret in het Vercel-project justabook, afzonderlijk voor Production en Preview. Vercel bevestigde succesvolle opslag. De waarde is niet in repositorybestanden opgenomen. De sleutel wordt pas actief bij een nieuwe deployment. De webuitbreiding is nog niet gedeployd. Databasepolicies zijn op aanwezigheid en configuratie gecontroleerd; een end-to-end test met twee echte app-accounts blijft nog open.
 
 Vercel-configuratie gecontroleerd: ANTHROPIC_API_KEY, VITE_SUPABASE_URL en VITE_SUPABASE_ANON_KEY bestaan al voor Production en Preview. De nieuwe kennisbankcode moet nog worden gereviewd en gedeployd; er is bewust geen herdeploy van de oude app gestart. Een echte transcriptie via de nieuwe endpoint is nog niet getest.
+
+## Publicatie bevestigd
+
+Live op https://justabook.org/ via commit 76b6db0. GitHub-status Vercel: success / Deployment has completed. Deployment A9bofT6B1y6hz3hdKnw8iRxNSM5r. HTTP 200; live JS-bundle bevat de nieuwe kennisinterface. POST /api/knowledge zonder login retourneert 401. Negen tests, productiebouw en gerichte ESLint-controle geslaagd. De live browser staat op het inlogscherm; een echte transcriptie met een ingelogd app-account is nog niet uitgevoerd. Eerdere opmerkingen over niet publiceren hierboven beschrijven de voorbereiding en zijn hiermee achterhaald.
