@@ -162,6 +162,20 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
               )
             }
 
+            if (item.type === 'source') {
+              return (
+                <div key={item.id} style={{ overflow: 'hidden' }}>
+                  <AutoTextarea
+                    small
+                    value={item.content}
+                    onChange={val => updateItem(item.id, { content: val })}
+                    onFocus={() => setActiveItemId(item.id)}
+                    onShiftEnter={() => onAdd(page.id, 'hoofdstuk')}
+                  />
+                </div>
+              )
+            }
+
             if (item.type === 'image') {
 
               return (
@@ -261,7 +275,7 @@ export default function PageBlock({ page, isActive, onSelect, onUpdate, onAdd, o
   )
 }
 
-function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
+function AutoTextarea({ value, onChange, onFocus, onShiftEnter, small = false }) {
   const ref = useRef(null)
   useEffect(() => {
     if (ref.current) {
@@ -282,9 +296,9 @@ function AutoTextarea({ value, onChange, onFocus, onShiftEnter }) {
       rows={1}
       style={{
         display: 'block', width: '100%', border: 'none', outline: 'none',
-        resize: 'none', fontFamily: 'var(--font-display)', fontSize: '14px',
-        lineHeight: '1.7', color: '#424245', background: 'transparent',
-        padding: 0, minHeight: '28px', overflow: 'hidden',
+        resize: 'none', fontFamily: 'var(--font-display)', fontSize: small ? '12px' : '14px',
+        lineHeight: small ? '1.5' : '1.7', color: small ? '#86868b' : '#424245', background: 'transparent',
+        padding: 0, minHeight: small ? '20px' : '28px', overflow: 'hidden',
       }}
     />
   )

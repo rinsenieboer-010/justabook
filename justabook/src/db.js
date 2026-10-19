@@ -32,13 +32,21 @@ export async function loadBooks(userId) {
 }
 
 export async function addBookDB(userId, book) {
+  // Nieuw boek achteraan: hoogste sort_order + 1
+  const { data: last } = await supabase
+    .from('jab_books')
+    .select('sort_order')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+  const sortOrder = last && last.length ? (last[0].sort_order ?? 0) + 1 : 0
   const { data } = await supabase
     .from('jab_books')
     .insert({
       id: book.id,
       user_id: userId,
       title: book.title,
-      sort_order: 0,
+      sort_order: sortOrder,
       created_at_display: book.createdAt,
     })
     .select()
@@ -54,6 +62,9 @@ export async function updateBookDB(book) {
 }
 
 export async function deleteBookDB(id) {
+  // Eerst de pagina's, dan het boek (niet afhankelijk van ON DELETE CASCADE)
+  const { error } = await supabase.from('jab_pages').delete().eq('book_id', id)
+  if (error) return
   await supabase.from('jab_books').delete().eq('id', id)
 }
 

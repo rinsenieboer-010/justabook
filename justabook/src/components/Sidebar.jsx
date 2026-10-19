@@ -32,7 +32,7 @@ export default function Sidebar({
     return () => document.removeEventListener('mousedown', handler)
   }, [showBookMenu])
 
-  const pageText = (p) => (p.items || []).filter(i => i.type === 'text').map(i => i.content).join(' ')
+  const pageText = (p) => (p.items || []).filter(i => i.type === 'text' || i.type === 'source').map(i => i.content).join(' ')
 
   const filtered = query.trim() === ''
     ? pages.map((p, idx) => ({ ...p, idx }))
