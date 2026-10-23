@@ -1,0 +1,9 @@
+# Just a Book
+
+> Just a Book is a minimal online document editor: write and organise documents without toolbars and clutter, with pages that grow with your text.
+
+Made by Rinse Nieboer, Rotterdam. Built for people who want to write and keep their documents structured without folders in folders.
+
+## Links
+- [Editor](https://justabook.org)
+- [Maker](https://rjnieboer.com)
